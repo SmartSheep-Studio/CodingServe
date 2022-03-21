@@ -1,0 +1,68 @@
+doctype html
+html(lang="en")
+    head
+        meta(name='viewport' content='width=device-width, initial-scale=1')
+        title Signin | LumbaShark
+
+        <!--  Bootstrap  -->
+        link(href="/bootstrap/css/bootstrap.min.css" rel="stylesheet")
+        script(src="/bootstrap/js/bootstrap.bundle.min.js")
+
+        style.
+            html .full-height {
+                height: 100vh;
+            }
+body
+div(class='full-height row align-items-center' style='background-color: #f6f8fa;')
+    div(class='col-lg-3 col-sm-6 col-xs-7 mx-auto')
+        h4(class='text-center' style='line-height: 60px')
+            img(src='/favicon.ico' alt='LumbaShark' height='80' width='80')
+        if (error)
+            div(class='card text-white bg-danger')
+                div(class='card-body text-center pb-0')
+                    b Error
+                    br
+                    span #{error}
+                hr
+                div(class='card-body pt-0')
+                    span If you are the OAuth developer, you can follow the step:
+                    br
+                    ul
+                        li Register your client on LumbaShark Developer Protocol
+                        li Check your client status on LumbaShark Developer Protocol
+                        li Move your other grant type to authorization code mode, we only support authorization code mode
+                        li Read the document
+                        li Contact our customer service(If you are our member)
+                    ul
+                    span If you are the user, you can follow the step:
+                    br
+                    ul
+                        li Contact the platform developer
+                        li Contact our customer service(If you are our member)
+                    ul
+        else
+            div(class='card')
+                div(class='card-body pb-0')
+                    div
+                        img(
+                            src=client.avatar
+                            alt="" class='d-block mx-auto rounded-circle' width='50' height='50')
+                        div(class='text-center mt-1')
+                            span
+                                b #{client.client_name}
+                                span(class='text-secondary') &nbsp;#{developer.username}
+                                br
+                            span Want authenticate and get these permissions
+                hr
+                div(class='card-body pt-0')
+
+                    br
+                    div(id='authorization-zone')
+                        a(class="btn btn-secondary float-start" href="javascript:cancel();" style="width: 49%") Cancel
+                        button(type="button" class="btn btn-success float-end" style="width: 49%") Grant access
+script.
+    function cancel() {
+      if (confirm("Cancel grant access? Then we will redirect you to the previous page.")) {
+        history.go(-1);
+      }
+    }
