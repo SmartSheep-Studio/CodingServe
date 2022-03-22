@@ -15,7 +15,7 @@ export class OauthController {
   }
 
   @Get()
-  @Render('oauth/signin')
+  @Render('oauth/authenticate')
   async signin(@Query() query: object) {
     if (query['credentials']) {
       return { credentials: query['credentials'] };
@@ -39,10 +39,10 @@ export class OauthController {
   }
 
   @Post()
-  async check_credentials(@Body() data: object, @Res() res) {
+  async check_credentials(@Body() data: object, @Res() response) {
     const user = await this.usersService.getUserByUsername(data['username']);
     if (!user || !await bcrypt.compare(data['password'], user.password)) {
-      return res.redirect('/authenticate/oauth?credentials=' + encodeURIComponent('Invailed credentials (AU#CR04)'));
+      return response.redirect('/authenticate/oauth?credentials=' + encodeURIComponent('Invailed credentials (AU#CR04)'));
     }
     const token = this.jwtService.sign({ uid: user.id, code: uuidv4() });
     await this.prisma.authorization_codes.deleteMany({ where: { uid: user.id } });
@@ -54,49 +54,38 @@ export class OauthController {
         client_id: data['client_id'],
       },
     });
-    return res.redirect(data['redirect_uri'] + '?code=' + token);
+    return response.redirect(data['redirect_uri'] + '?code=' + token);
   }
 
-  @Get('grant')
-  @Render('oauth/authenticate')
-  async authorization(@Query() query: object) {
-    if (!query['redirect_uri']) {
-      return { error: 'Unkown redirect uri (AU#CR04)' };
+  @Post('grant')
+  async authorization(@Body() data: object) {
+    if (!data['grant_type'] || (data['grant_type'] !== 'authorization_code' && data['grant_type'] !== 'refresh_token')) {
+      return { error: 'Unsupported grant type (AU#C400)' };
     }
-    if (!query['code'] || !this.jwtService.verify(query['code'])) {
-      return { error: 'Invaild authorization code (AAU#CA50)' };
+    let token, user;
+    if (data['grant_type'] === 'refresh_token') {
+      if (!data['refresh_token'] || !this.jwtService.verify(data['refresh_token'])) {
+        return { message: 'Invaild refresh token (AU#CA50)', error: 'DataError' };
+      }
+      token = await this.prisma.authorization_refresh_codes.findUnique({ where: { code: data['refresh_token'] } });
+      if (!token) {
+        return { message: 'Invaild auhtorization code (AU#CA50)', error: 'DataError' };
+      }
+      user = await this.prisma.users.findUnique({ where: { id: token['uid'] } });
+      await this.prisma.authorization_refresh_codes.delete({ where: { code: data['refresh_token'] } });
     }
-    const token = await this.prisma.authorization_codes.findUnique({ where: { code: query['code'] } });
-    if (!token) {
-      return { error: 'Invaild auhtorization code (AU#CA50)' };
+    if (data['grant_type'] === 'authorization_code') {
+      if (!data['code'] || !this.jwtService.verify(data['code'])) {
+        return { message: 'Invaild authorization code (AU#CA50)', error: 'DataError' };
+      }
+      token = await this.prisma.authorization_codes.findUnique({ where: { code: data['code'] } });
+      if (!token) {
+        return { message: 'Invaild auhtorization code (AU#CA50)', error: 'DataError' };
+      }
+      user = await this.prisma.users.findUnique({ where: { id: token['uid'] } });
+      await this.prisma.authorization_codes.deleteMany({ where: { uid: user.id } });
     }
-    const user = await this.prisma.users.findUnique({ where: { id: token['uid'] } });
-    const client = await this.prisma.authorization_clients.findUnique({ where: { client_id: token['client_id'] } });
-    const developer = await this.prisma.users.findUnique({ where: { id: client['developer_id'] } });
-    return {
-      redirect_uri: query['redirect_uri'],
-      token: token.code,
-      client: client,
-      developer: developer,
-      user: user
-    };
-  }
-
-  @Get('granted')
-  async grant_access(@Query() query: object, @Res() response) {
-    if (!query['redirect_uri']) {
-      return { message: 'Unkown redirect uri (AU#CR04)', error: 'DataError' };
-    }
-    if (!query['code'] || !this.jwtService.verify(query['code'])) {
-      return { message: 'Invaild authorization code (AU#CA50)', error: 'DataError' };
-    }
-    const token = await this.prisma.authorization_codes.findUnique({ where: { code: query['code'] } });
-    if (!token) {
-      return { message: 'Invaild auhtorization code (AU#CA50)', error: 'DataError' };
-    }
-    const user = await this.prisma.users.findUnique({ where: { id: token['uid'] } });
-    await this.prisma.authorization_codes.deleteMany({ where: { uid: user.id } });
-    const refreshCode = this.jwtService.sign({ uid: user.id, code: uuidv4() }, {expiresIn: '10y'});
+    const refreshCode = this.jwtService.sign({ uid: user.id, code: uuidv4() }, { expiresIn: '10y' });
     await this.prisma.authorization_refresh_codes.create({
       data: {
         id: uuidv4(),
@@ -105,8 +94,13 @@ export class OauthController {
         client_id: token['client_id'],
       },
     });
-    const accessToken = this.jwtService.sign({username: user.username, uid: user.id}, {expiresIn: '30d'});
-    return response.redirect(`${query['redirect_uri']}?access_token=${accessToken}&refresh_code=${refreshCode}&token_type=bearer&expires_in=${30 * 24 * 60 * 60}&state=${query['state']}`);
+    const accessToken = this.jwtService.sign({ username: user.username, uid: user.id }, { expiresIn: '30d' });
+    return {
+      access_token: accessToken,
+      refresh_token: refreshCode,
+      expires_in: 30 * 24 * 60 * 60,
+      token_type: 'Bearer',
+    };
   }
 
   @Put('/registerClient')
