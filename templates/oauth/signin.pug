@@ -17,7 +17,22 @@ div(class='full-height row align-items-center' style='background-color: #f6f8fa;
     div(class='col-lg-3 col-sm-6 col-xs-7 mx-auto')
         h4(class='text-center' style='line-height: 60px')
             img(src='/favicon.ico' alt='LumbaShark' height='80' width='80')
-        if (error)
+        if(credentials)
+            div(class='card text-white bg-danger')
+                div(class='card-body text-center pb-0')
+                    b Credentials is invalid
+                    br
+                    span #{credentials}
+                hr
+                div(class='card-body pt-0')
+                    span Please follow the steps to check your input:
+                        br
+                        ul
+                            li Check your username and password
+                            li Check network connection
+                            li Contact our administrator
+                        ul
+        else if (error)
             div(class='card text-white bg-danger')
                 div(class='card-body text-center pb-0')
                     b Error
@@ -26,20 +41,21 @@ div(class='full-height row align-items-center' style='background-color: #f6f8fa;
                 hr
                 div(class='card-body pt-0')
                     span If you are the OAuth developer, you can follow the step:
-                    br
-                    ul
-                        li Register your client on LumbaShark Developer Protocol
-                        li Check your client status on LumbaShark Developer Protocol
-                        li Move your other grant type to authorization code mode, we only support authorization code mode
-                        li Read the document
-                        li Contact our customer service(If you are our member)
-                    ul
-                    span If you are the user, you can follow the step:
-                    br
-                    ul
-                        li Contact the platform developer
-                        li Contact our customer service(If you are our member)
-                    ul
+                        br
+                        ul
+                            li Register your client on LumbaShark Developer Protocol
+                            li Check your client status on LumbaShark Developer Protocol
+                            li Move your other grant type to implicit mode, we only support implicit mode
+                            li Check your redirect uri
+                            li Read the document
+                            li Contact our customer service(If you are our member)
+                        ul
+                        span If you are the user, you can follow the step:
+                        br
+                        ul
+                            li Contact the platform developer
+                            li Contact our customer service(If you are our member)
+                        ul
         else
             div(class='card')
                 div(class='card-body pb-0')
@@ -52,17 +68,32 @@ div(class='full-height row align-items-center' style='background-color: #f6f8fa;
                                 b #{client.client_name}
                                 span(class='text-secondary') &nbsp;#{developer.username}
                                 br
-                            span Want authenticate and get these permissions
+                            span Want access your account
                 hr
-                div(class='card-body pt-0')
+                div(class='card-body pt-0' id='signin-form')
+                    form(action='/authenticate/oauth', method='POST')
+                        div(id='signin-content')
+                            h6(class='text-center') Sign in
+                            div
+                                label(for="username" class="form-label") Username
+                                input(type="text" class="form-control" name="username" id="username" required)
+                            div(class='mt-3')
+                                label(for="password" class="form-label") Password
+                                input(type="password" class="form-control" name="password" id="password" required)
 
-                    br
-                    div(id='authorization-zone')
-                        a(class="btn btn-secondary float-start" href="javascript:cancel();" style="width: 49%") Cancel
-                        button(type="button" class="btn btn-success float-end" style="width: 49%") Grant access
+                            div(class='mt-3' style='display: none;')
+                                label(for="redirect_uri" class="form-label") Redirect URI
+                                input(type="text" class="form-control" name="redirect_uri" id="redirect_uri" value=redirect_uri required)
+                            div(class='mt-3' style='display: none;')
+                                label(for="client_id" class="form-label") Redirect URI
+                                input(type="text" class="form-control" name="client_id" id="client_id" value=client.client_id required)
+                        br
+                        div(id='authorization-zone')
+                            a(class="btn btn-secondary float-start" href="javascript:cancel();" style="width: 49%") Cancel
+                            button(type="submit" class="btn btn-success float-end" style="width: 49%") Sign in
 script.
-    function cancel() {
-      if (confirm("Cancel grant access? Then we will redirect you to the previous page.")) {
-        history.go(-1);
-      }
+  function cancel() {
+    if (confirm("Cancel grant access? Then we will redirect you to the previous page.")) {
+      history.go(-1);
     }
+  }

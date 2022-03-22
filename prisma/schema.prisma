@@ -35,3 +35,12 @@ model authorization_clients {
   created_at    DateTime  @default(now()) @db.DateTime(0)
   updated_at    DateTime  @default(now()) @db.DateTime(0)
 }
+
+model authorization_codes {
+  id            String    @id
+  code          String    @unique @db.VarChar(512)
+  uid           String    @db.VarChar(36)
+  client_id     String    @db.VarChar(36)
+  created_at    DateTime  @default(now()) @db.DateTime(0)
+  updated_at    DateTime  @default(now()) @db.DateTime(0)
+}

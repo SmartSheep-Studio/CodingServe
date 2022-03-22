@@ -31,6 +31,7 @@ div(class='full-height row align-items-center' style='background-color: #f6f8fa;
                         li Register your client on LumbaShark Developer Protocol
                         li Check your client status on LumbaShark Developer Protocol
                         li Move your other grant type to authorization code mode, we only support authorization code mode
+                        li Check your redirect uri
                         li Read the document
                         li Contact our customer service(If you are our member)
                     ul
@@ -69,10 +70,17 @@ div(class='full-height row align-items-center' style='background-color: #f6f8fa;
                                       span Unkown&nbsp;
                                           span(class='text-secondary') (#{scope})
                     br
-                    div(id='authorization-zone')
-                        a(class="btn btn-secondary float-start" href="javascript:cancel();" style="width: 49%") Go Back
-                        button(type="button" class="btn btn-success float-end" style="width: 49%") Signin
+                    div(id='authorization-zone' class='text-center')
+                        a(class="btn btn-secondary float-start" href="javascript:cancel();" style="width: 49%") Cancel
+                        a(class="btn btn-success float-end" style="width: 49%" href='/authenticate/oauth/granted?code=#{token}&redirect_uri=#{redirect_uri}') Grant access
+                        br
+                        br
+                        span(class='text-secondary') Use the&nbsp;
+                        b(class='text-secondary') #{user.username}
+                        span(class='text-secondary') &nbsp;identity to grant access
 script.
   function cancel() {
-    history.go(-1);
+    if(confirm('Are you confirm to cancel grant access? If you cancel we will take you to previous page.')) {
+      history.go(-1);
+    }
   }
