@@ -17,11 +17,10 @@ export class OauthController {
   @Get()
   @Render('oauth/signin')
   async signin(@Query() query: object) {
-    console.log(query);
     if (query['credentials']) {
       return { credentials: query['credentials'] };
     }
-    if (query['response_type'] !== 'token') {
+    if (query['response_type'] !== 'code') {
       return { error: 'Unsupported response/grant type (AU#C400)' };
     }
     if (!query['redirect_uri']) {
@@ -55,7 +54,7 @@ export class OauthController {
         client_id: data['client_id'],
       },
     });
-    return res.redirect('/authenticate/oauth/grant' + '?code=' + token + '&redirect_uri=' + encodeURIComponent(data['redirect_uri']));
+    return res.redirect(data['redirect_uri'] + '?code=' + token);
   }
 
   @Get('grant')
@@ -97,8 +96,17 @@ export class OauthController {
     }
     const user = await this.prisma.users.findUnique({ where: { id: token['uid'] } });
     await this.prisma.authorization_codes.deleteMany({ where: { uid: user.id } });
+    const refreshCode = this.jwtService.sign({ uid: user.id, code: uuidv4() }, {expiresIn: '10y'});
+    await this.prisma.authorization_refresh_codes.create({
+      data: {
+        id: uuidv4(),
+        code: refreshCode,
+        uid: user.id,
+        client_id: token['client_id'],
+      },
+    });
     const accessToken = this.jwtService.sign({username: user.username, uid: user.id}, {expiresIn: '30d'});
-    return response.redirect(`${query['redirect_uri']}?access_token=${accessToken}&token_type=bearer&expires_in=${30 * 24 * 60 * 60}&state=${query['state']}`);
+    return response.redirect(`${query['redirect_uri']}?access_token=${accessToken}&refresh_code=${refreshCode}&token_type=bearer&expires_in=${30 * 24 * 60 * 60}&state=${query['state']}`);
   }
 
   @Put('/registerClient')
