@@ -96,6 +96,7 @@ export class OauthController {
       return { message: 'Invaild auhtorization code (AU#CA50)', error: 'DataError' };
     }
     const user = await this.prisma.users.findUnique({ where: { id: token['uid'] } });
+    await this.prisma.authorization_codes.deleteMany({ where: { uid: user.id } });
     const accessToken = this.jwtService.sign({username: user.username, uid: user.id}, {expiresIn: '30d'});
     return response.redirect(`${query['redirect_uri']}?access_token=${accessToken}&token_type=bearer&expires_in=${30 * 24 * 60 * 60}&state=${query['state']}`);
   }

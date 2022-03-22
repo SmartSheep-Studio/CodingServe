@@ -72,7 +72,7 @@ div(class='full-height row align-items-center' style='background-color: #f6f8fa;
                     br
                     div(id='authorization-zone' class='text-center')
                         a(class="btn btn-secondary float-start" href="javascript:cancel();" style="width: 49%") Cancel
-                        a(class="btn btn-success float-end" style="width: 49%" href='/authenticate/oauth/granted?code=#{token}&redirect_uri=#{redirect_uri}') Grant access
+                        a(class="btn btn-success float-end" style="width: 49%" href='/authenticate/oauth/granted?code=' + token + '&redirect_uri=' + redirect_uri) Grant access
                         br
                         br
                         span(class='text-secondary') Use the&nbsp;
