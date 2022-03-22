@@ -1,0 +1,68 @@
+doctype html
+html(lang="en")
+    head
+        meta(name='viewport' content='width=device-width, initial-scale=1')
+        title Authorization | LumbaShark
+
+        <!--  Bootstrap  -->
+        link(href="/bootstrap/css/bootstrap.min.css" rel="stylesheet")
+        script(src="/bootstrap/js/bootstrap.bundle.min.js")
+
+        style.
+            html .full-height {
+                height: 100vh;
+            }
+body
+div(class='full-height row align-items-center' style='background-color: #f6f8fa;')
+    div(class='col-lg-3 col-md-6 col-xs-7 mx-auto')
+        h4(class='text-center' style='line-height: 60px')
+            img(src='/favicon.ico' alt='LumbaShark' height='80' width='80')
+        if(success)
+            div(class='card text-white bg-success')
+                div(class='card-body text-center')
+                    b #{success}
+                    br
+                    span Now you can enjoy our services with this SmartSheep Cloud universal account!
+                    br
+                    span Welcome join the SmartSheep Cloud family!
+        else if (error)
+            div(class='card text-white bg-danger')
+                div(class='card-body text-center pb-0')
+                    b Signup Failed
+                    br
+                    span #{error}
+                hr
+                div(class='card-body pt-0')
+                    span Error occured, please check your input
+                    br
+                    ul
+                        li Check your username
+                        li Check your username is allowed
+                        li Check your email isn't in the blocklist
+                        li Check your password is match the confirm password
+                    ul
+                    div(class='text-center')
+                        a(href='javascript:go_back()' class='text-white')
+                            b Go Back
+        else
+            div(class='card')
+                div(class='card-body' id='signin-form')
+                    form(action='/management/users/signup', method='POST')
+                        div(id='signin-content')
+                            h6(class='text-center') Sign up
+                            div
+                                label(for="username" class="form-label") Username
+                                input(type="text" class="form-control" name="username" id="username" required)
+                            div(class='mt-3')
+                                label(for="password" class="form-label") Password
+                                input(type="password" class="form-control" name="password" id="password" required)
+                            div(class='mt-3')
+                                label(for="confirm-password" class="form-label") Confirm Password
+                                input(type="password" class="form-control" name="confirm_password" id="confirm-password" required)
+                        br
+                        div(id='authorization-zone')
+                            button(type="submit" class="btn btn-success" style="width: 100%") Sign up
+script.
+  function go_back() {
+    history.go(-1);
+  }

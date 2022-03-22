@@ -11,7 +11,6 @@ export class GroupsController {
   }
 
   @Get()
-  @HttpCode(200)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('group select')
   async get_user(id: number) {
@@ -45,7 +44,6 @@ export class GroupsController {
   }
 
   @Patch()
-  @HttpCode(200)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('group update')
   async update_user(@Body() group: GroupModel, @Res() response) {
@@ -60,7 +58,6 @@ export class GroupsController {
   }
 
   @Delete()
-  @HttpCode(200)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('group delete')
   async delete_user(id: number) {

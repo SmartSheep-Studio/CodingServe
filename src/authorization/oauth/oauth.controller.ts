@@ -23,9 +23,6 @@ export class OauthController {
     if (query['response_type'] !== 'code') {
       return { error: 'Unsupported response/grant type (AU#C400)' };
     }
-    if (!query['redirect_uri']) {
-      return { error: 'Unkown redirect uri (AU#CR04)' };
-    }
     const client = await this.prisma.authorization_clients.findUnique({ where: { client_id: query['client_id'] } });
     if (!client) {
       return { error: 'Client not found (AU#C404)' };

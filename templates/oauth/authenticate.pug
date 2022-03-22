@@ -14,7 +14,7 @@ html(lang="en")
             }
 body
 div(class='full-height row align-items-center' style='background-color: #f6f8fa;')
-    div(class='col-lg-3 col-sm-6 col-xs-7 mx-auto')
+    div(class='col-lg-3 col-md-6 col-xs-7 mx-auto')
         h4(class='text-center' style='line-height: 60px')
             img(src='/favicon.ico' alt='LumbaShark' height='80' width='80')
         if (error)
@@ -47,7 +47,7 @@ div(class='full-height row align-items-center' style='background-color: #f6f8fa;
                     div
                         img(
                             src=client.avatar
-                            alt="" class='d-block mx-auto rounded-circle' width='50' height='50')
+                            alt="Client Avatar" class='d-block mx-auto rounded-circle' width='50' height='50')
                         div(class='text-center mt-1')
                             span
                                 b #{client.client_name}
@@ -85,12 +85,15 @@ div(class='full-height row align-items-center' style='background-color: #f6f8fa;
                                 label(for="redirect_uri" class="form-label") Redirect URI
                                 input(type="text" class="form-control" name="redirect_uri" id="redirect_uri" value=redirect_uri required)
                             div(class='mt-3' style='display: none;')
-                                label(for="client_id" class="form-label") Redirect URI
+                                label(for="client_id" class="form-label") Client ID
                                 input(type="text" class="form-control" name="client_id" id="client_id" value=client.client_id required)
                         br
-                        div(id='authorization-zone')
+                        div(id='authorization-zone' class='text-center')
                             a(class="btn btn-secondary float-start" href="javascript:cancel();" style="width: 49%") Cancel
                             button(type="submit" class="btn btn-success float-end" style="width: 49%") Sign in & Grant access
+                            br
+                            br
+                            a(href='/management/users/signup') Didn't have account? Join us now!
 script.
   function cancel() {
     if(confirm('Are you confirm to cancel grant access? If you cancel we will take you to previous page.')) {
