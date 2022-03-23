@@ -15,7 +15,9 @@ block content
                         br
                         span Welcome join the SmartSheep Cloud family!
                         br
-                        span(class='text-secondery') You can close this page now.
+                        div(class='text-center')
+                            a(href='/' class='text-white')
+                                b Go Back
             else if (error)
                 div(class='card text-white bg-danger')
                     div(class='card-body text-center pb-0')
@@ -52,7 +54,8 @@ block content
                                     input(type="password" class="form-control" name="confirm_password" id="confirm-password" required)
                             br
                             div(id='authorization-zone')
-                                button(type="submit" class="btn btn-success" style="width: 100%") Sign up
+                                a(class="btn btn-secondary float-start" href='javascript:go_back()' style="width: 49%") Cancel
+                                button(type="submit" class="btn btn-success float-end" style="width: 49%") Sign up
     script.
       function go_back() {
         history.go(-1);
