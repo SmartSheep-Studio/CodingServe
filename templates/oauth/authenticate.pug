@@ -1,102 +1,91 @@
-doctype html
-html(lang="en")
-    head
-        meta(name='viewport' content='width=device-width, initial-scale=1')
-        title Authorization | LumbaShark
-
-        <!--  Bootstrap  -->
-        link(href="/bootstrap/css/bootstrap.min.css" rel="stylesheet")
-        script(src="/bootstrap/js/bootstrap.bundle.min.js")
-
-        style.
-            html .full-height {
-                height: 100vh;
-            }
-body
-div(class='full-height row align-items-center' style='background-color: #f6f8fa;')
-    div(class='col-lg-3 col-md-6 col-xs-7 mx-auto')
-        h4(class='text-center' style='line-height: 60px')
-            img(src='/favicon.ico' alt='LumbaShark' height='80' width='80')
-        if (error)
-            div(class='card text-white bg-danger')
-                div(class='card-body text-center pb-0')
-                    b Error
-                    br
-                    span #{error}
-                hr
-                div(class='card-body pt-0')
-                    span If you are the OAuth developer, you can follow the step:
-                    br
-                    ul
-                        li Register your client on LumbaShark Developer Protocol
-                        li Check your client status on LumbaShark Developer Protocol
-                        li Move your other grant type to authorization code mode, we only support authorization code mode
-                        li Check your redirect uri
-                        li Read the document
-                        li Contact our customer service(If you are our member)
-                    ul
-                    span If you are the user, you can follow the step:
-                    br
-                    ul
-                        li Contact the platform developer
-                        li Contact our customer service(If you are our member)
-                    ul
-        else
-            div(class='card')
-                div(class='card-body pb-0')
-                    div
-                        img(
-                            src=client.avatar
-                            alt="Client Avatar" class='d-block mx-auto rounded-circle' width='50' height='50')
-                        div(class='text-center mt-1')
-                            span
-                                b #{client.client_name}
-                                span(class='text-secondary') &nbsp;#{developer.username}
-                                br
-                            span Want authenticate and get these permissions
-                hr
-                div(class='card-body pt-0 pb-0')
-                    div(id='scope-information')
-                        h6(class='text-center') Required permissions
-                        ul(class="list-group")
-                          each scope in client.scope.split(',')
-                              li(class="list-group-item")
-                                  input(class="form-check-input me-1" disabled type="checkbox" checked="checked")
-                                  span &nbsp;
-                                  if scope === 'all'
-                                      span Access all things&nbsp;
-                                          span(class='text-secondary') (#{scope})
-                                  else
-                                      span Unkown&nbsp;
-                                          span(class='text-secondary') (#{scope})
-                hr
-                div(class='card-body pt-0' id='signin-form')
-                    form(action='/authenticate/oauth', method='POST')
-                        div(id='signin-content')
-                            h6(class='text-center') Sign in
-                            div
-                                label(for="username" class="form-label") Username
-                                input(type="text" class="form-control" name="username" id="username" required)
-                            div(class='mt-3')
-                                label(for="password" class="form-label") Password
-                                input(type="password" class="form-control" name="password" id="password" required)
-
-                            div(class='mt-3' style='display: none;')
-                                label(for="redirect_uri" class="form-label") Redirect URI
-                                input(type="text" class="form-control" name="redirect_uri" id="redirect_uri" value=redirect_uri required)
-                            div(class='mt-3' style='display: none;')
-                                label(for="client_id" class="form-label") Client ID
-                                input(type="text" class="form-control" name="client_id" id="client_id" value=client.client_id required)
+extends ../layout
+block head
+    title Authenticate | LumbaShark
+block content
+    div(class='full-height row align-items-center' style='background-color: #f6f8fa;')
+        div(class='col-lg-3 col-md-6 col-xs-7 mx-auto')
+            h4(class='text-center' style='line-height: 60px')
+                img(src='/favicon.ico' alt='LumbaShark' height='80' width='80')
+            if (error)
+                div(class='card text-white bg-danger')
+                    div(class='card-body text-center pb-0')
+                        b Error
                         br
-                        div(id='authorization-zone' class='text-center')
-                            a(class="btn btn-secondary float-start" href="javascript:cancel();" style="width: 49%") Cancel
-                            button(type="submit" class="btn btn-success float-end" style="width: 49%") Sign in & Grant access
+                        span #{error}
+                    hr
+                    div(class='card-body pt-0')
+                        span If you are the OAuth developer, you can follow the step:
+                        br
+                        ul
+                            li Register your client on LumbaShark Developer Protocol
+                            li Check your client status on LumbaShark Developer Protocol
+                            li Move your other grant type to authorization code mode, we only support authorization code mode
+                            li Check your redirect uri
+                            li Read the document
+                            li Contact our customer service(If you are our member)
+                        ul
+                        span If you are the user, you can follow the step:
+                        br
+                        ul
+                            li Contact the platform developer
+                            li Contact our customer service(If you are our member)
+                        ul
+            else
+                div(class='card')
+                    div(class='card-body pb-0')
+                        div
+                            img(
+                                src=client.avatar
+                                alt="Client Avatar" class='d-block mx-auto rounded-circle' width='50' height='50')
+                            div(class='text-center mt-1')
+                                span
+                                    b #{client.client_name}
+                                    span(class='text-secondary') &nbsp;#{developer.username}
+                                    br
+                                span Want authenticate and get these permissions
+                    hr
+                    div(class='card-body pt-0 pb-0')
+                        div(id='scope-information')
+                            h6(class='text-center') Required permissions
+                            ul(class="list-group")
+                              each scope in client.scope.split(',')
+                                  li(class="list-group-item")
+                                      input(class="form-check-input me-1" disabled type="checkbox" checked="checked")
+                                      span &nbsp;
+                                      if scope === 'all'
+                                          span Access all things&nbsp;
+                                              span(class='text-secondary') (#{scope})
+                                      else
+                                          span Unkown&nbsp;
+                                              span(class='text-secondary') (#{scope})
+                    hr
+                    div(class='card-body pt-0' id='signin-form')
+                        form(action='/authenticate/oauth', method='POST')
+                            div(id='signin-content')
+                                h6(class='text-center') Sign in
+                                div
+                                    label(for="username" class="form-label") Username
+                                    input(type="text" class="form-control" name="username" id="username" required)
+                                div(class='mt-3')
+                                    label(for="password" class="form-label") Password
+                                    input(type="password" class="form-control" name="password" id="password" required)
+
+                                div(class='mt-3' style='display: none;')
+                                    label(for="redirect_uri" class="form-label") Redirect URI
+                                    input(type="text" class="form-control" name="redirect_uri" id="redirect_uri" value=redirect_uri required)
+                                div(class='mt-3' style='display: none;')
+                                    label(for="client_id" class="form-label") Client ID
+                                    input(type="text" class="form-control" name="client_id" id="client_id" value=client.client_id required)
                             br
-                            br
-                            a(href='/management/users/signup') Didn't have account? Join us now!
-script.
-  function cancel() {
-    if(confirm('Are you confirm to cancel grant access? If you cancel we will take you to previous page.')) {
-      history.go(-1);
-    }
-  }
+                            div(id='authorization-zone' class='text-center')
+                                a(class="btn btn-secondary float-start" href="javascript:cancel();" style="width: 49%") Cancel
+                                button(type="submit" class="btn btn-success float-end" style="width: 49%") Sign in & Grant access
+                                br
+                                br
+                                a(href='/management/users/signup') Didn't have account? Join us now!
+    script.
+      function cancel() {
+        if(confirm('Are you confirm to cancel grant access? If you cancel we will take you to previous page.')) {
+          history.go(-1);
+        }
+      }
