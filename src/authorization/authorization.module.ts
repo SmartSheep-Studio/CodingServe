@@ -15,7 +15,8 @@ import { OauthModule } from './oauth/oauth.module';
         signOptions: {expiresIn: '14d'}
     }), GroupsModule, OauthModule],
     providers: [AuthorizationService, LocalStrategy, JwtStrategy],
-    controllers: [AuthorizationController]
+    controllers: [AuthorizationController],
+    exports: [AuthorizationService]
 })
 export class AuthorizationModule {
 }

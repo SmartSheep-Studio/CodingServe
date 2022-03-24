@@ -103,7 +103,7 @@ export class OauthController {
   @Put('/registerClient')
   @HttpCode(201)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @Permissions('oauth-client register')
+  @Permissions('oauth-client management')
   async registerClient(@Body() client: ClientModel, @Request() request, @Res() response: any) {
     client.developer_id = request.user.id;
     client.id = uuidv4();
