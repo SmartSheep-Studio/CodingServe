@@ -3,7 +3,7 @@ import { ApiTags } from '@nestjs/swagger';
 
 const packageInfo = require('../../package.json');
 
-@Controller('/state')
+@Controller('/')
 @ApiTags('状态')
 export class StateController {
   @Get()

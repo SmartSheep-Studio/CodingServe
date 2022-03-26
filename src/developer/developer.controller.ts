@@ -1,24 +1,29 @@
-import { Body, Controller, Get, Post, Query, Render, Res } from '@nestjs/common';
+import { Body, Controller, HttpCode, Put, Request, Res, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../authorization/guards/jwt.guard';
+import { PermissionsGuard } from '../authorization/guards/permissions.guard';
+import { Permissions } from '../authorization/guards/permissions.decorator';
+import { authorization_clients as ClientModel } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 import { DeveloperService } from './developer.service';
 
 @Controller('/management/developer')
 export class DeveloperController {
-  constructor(private developerService: DeveloperService) {
+  constructor(private prisma: PrismaService, private developerService: DeveloperService) {
   }
 
-  @Get('signup')
-  @Render('developer/signup')
-  async signup_developer(@Query() data: object) {
-    return {error: data['error'], success: data['success']}
-  }
 
-  @Post('signup')
-  async confirm_signup_developer(@Body() data: object, @Res() response) {
-    try {
-      await this.developerService.signup_developer(data['username'], data['password']);
-    } catch (e) {
-      return response.redirect('/management/developer/signup?error=' + encodeURIComponent(e.message))
-    }
-    return response.redirect('/management/developer/signup?success=' + encodeURIComponent("Signup as developer successful!"))
+  @Put('/client')
+  @HttpCode(201)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions('oauth-client management')
+  async registerClient(@Body() client: ClientModel, @Request() request, @Res() response: any) {
+    const developer = await this.prisma.users.findUnique({where: {id: request.user.id}});
+    const data = await this.developerService.register_client(developer, client);
+
+    return response.send({
+      statusCode: 201,
+      message: 'Client registered successfully',
+      client: data,
+    });
   }
 }

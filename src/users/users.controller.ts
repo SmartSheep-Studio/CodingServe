@@ -1,13 +1,13 @@
 import { Body, Controller, Delete, Get, HttpCode, Patch, Put, Res, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../guards/jwt.guard';
-import { PermissionsGuard } from '../guards/permissions.guard';
-import { Permissions } from '../guards/permissions.decorator';
+import { JwtAuthGuard } from '../authorization/guards/jwt.guard';
+import { PermissionsGuard } from '../authorization/guards/permissions.guard';
+import { Permissions } from '../authorization/guards/permissions.decorator';
 import { users as UserModel } from '@prisma/client';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from './users.service';
 
 @Controller('/api/management/users')
-export class UsersApiController {
+export class UsersController {
   constructor(private prisma: PrismaService, private userService: UsersService) {
   }
 

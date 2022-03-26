@@ -1,7 +1,7 @@
 import {v4 as uuidv4} from 'uuid';
 import {Injectable} from '@nestjs/common';
 import {users as UserModel} from '@prisma/client';
-import {PrismaService} from "../../prisma/prisma.service";
+import {PrismaService} from "../prisma/prisma.service";
 import * as bcrypt from "bcrypt";
 
 @Injectable()

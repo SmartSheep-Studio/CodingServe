@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
 import { DeveloperController } from './developer.controller';
-import { DeveloperApiController } from './developer.api.controller';
 import { DeveloperService } from './developer.service';
 import { AuthorizationModule } from '../authorization/authorization.module';
 
 @Module({
-  controllers: [DeveloperController, DeveloperApiController],
+  controllers: [DeveloperController],
   providers: [DeveloperService],
   imports: [AuthorizationModule]
 })

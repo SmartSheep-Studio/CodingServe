@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get, HttpCode, Patch, Put, Res, UseGuards } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { JwtAuthGuard } from '../guards/jwt.guard';
-import { PermissionsGuard } from '../guards/permissions.guard';
-import { Permissions } from '../guards/permissions.decorator';
+import { PrismaService } from '../prisma/prisma.service';
+import { JwtAuthGuard } from '../authorization/guards/jwt.guard';
+import { PermissionsGuard } from '../authorization/guards/permissions.guard';
+import { Permissions } from '../authorization/guards/permissions.decorator';
 import { groups as GroupModel } from '@prisma/client';
 
 @Controller('groups')

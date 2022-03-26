@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { join } from 'path';
 
 const packageInfo = require('../package.json');
 
@@ -17,9 +16,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('documentation', app, document);
 
-  app.useStaticAssets(join(__dirname, '..', 'public'));
-  app.setBaseViewsDir(join(__dirname, '..', 'templates'));
-  app.setViewEngine('pug');
+  app.setGlobalPrefix('api');
 
   await app.listen(3000);
   console.log(`Application is running on: ${await app.getUrl()}`);

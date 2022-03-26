@@ -6,10 +6,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { JwtAuthGuard } from '../guards/jwt.guard';
 import { PermissionsGuard } from '../guards/permissions.guard';
 import { Permissions } from '../guards/permissions.decorator';
-import { UsersService } from '../users/users.service';
+import { UsersService } from '../../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 
-@Controller('authenticate/oauth')
+@Controller('oauth')
 export class OauthController {
   constructor(private prisma: PrismaService, private usersService: UsersService, private jwtService: JwtService) {
   }
