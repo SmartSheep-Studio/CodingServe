@@ -11,6 +11,8 @@ model users {
   id         String   @id @db.VarChar(36)
   username   String   @unique @db.VarChar(80)
   password   String   @db.Text
+  email      String   @db.Text
+  profile    Json
   group_id   Int
   created_at DateTime @default(now()) @db.DateTime(0)
   update_at  DateTime @default(now()) @db.DateTime(0)

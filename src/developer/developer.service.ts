@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthorizationService } from '../authorization/authorization.service';
+import * as bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
+import { authorization_clients as ClientModel, users as UserModel } from '@prisma/client';
 
 @Injectable()
 export class DeveloperService {
@@ -26,5 +29,13 @@ export class DeveloperService {
       });
     }
     await this.prisma.users.update({ where: { id: user.id }, data: { group_id: developer_group.id } });
+  }
+
+  async register_client(developer: UserModel, client: ClientModel) {
+    client.id = uuidv4();
+    client.client_secret = await bcrypt.hash(uuidv4().replaceAll('-', '').toUpperCase(), await bcrypt.genSalt());
+    client.client_id = uuidv4().replaceAll('-', '').toUpperCase();
+    client.developer_id = developer.id;
+    return await this.prisma.authorization_clients.create({ data: client });
   }
 }

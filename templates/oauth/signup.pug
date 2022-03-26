@@ -37,6 +37,24 @@ block content
                         div(class='text-center')
                             a(href='javascript:go_back()' class='text-white')
                                 b Go Back
+            else if(verfiy)
+                div(class='card')
+                    div(class='card-body' id='signin-form')
+                        span We send a email #{verify}, please check your inbox and junk mailbox.
+                        br
+                        span If you want change your mail, you can&nbsp;
+                        a(href='javascript:go_back()') Go Back
+                        span &nbsp;here
+                        form(action='/management/users/signup', method='POST')
+                            div(id='signin-content')
+                                h6(class='text-center') Verify your email
+                                div
+                                    label(for="username" class="form-label") Verify Code
+                                    input(type="text" class="form-control" name="username" id="username" required)
+                            br
+                            div(id='authorization-zone')
+                                a(class="btn btn-secondary float-start" href='javascript:go_back()' style="width: 49%") Cancel
+                                button(type="submit" class="btn btn-success float-end" style="width: 49%") Sign up
             else
                 div(class='card')
                     div(class='card-body' id='signin-form')
@@ -49,6 +67,9 @@ block content
                                 div(class='mt-3')
                                     label(for="password" class="form-label") Password
                                     input(type="password" class="form-control" name="password" id="password" required)
+                                div(class='mt-3')
+                                    label(for="email" class="form-label") Email
+                                    input(type="email" class="form-control" name="email" id="email" required)
                                 div(class='mt-3')
                                     label(for="confirm-password" class="form-label") Confirm Password
                                     input(type="password" class="form-control" name="confirm_password" id="confirm-password" required)
