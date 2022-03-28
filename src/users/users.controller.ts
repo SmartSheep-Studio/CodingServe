@@ -11,6 +11,7 @@ import {
   UseGuards,
   Query,
 } from '@nestjs/common';
+import { MailerService } from '@nestjs-modules/mailer';
 import { JwtAuthGuard } from '../authorization/guards/jwt.guard';
 import { PermissionsGuard } from '../authorization/guards/permissions.guard';
 import { Permissions } from '../authorization/guards/permissions.decorator';
@@ -23,6 +24,7 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(
     private prisma: PrismaService,
+    private mailerSerivce: MailerService,
     private userService: UsersService,
   ) {}
 
@@ -106,7 +108,7 @@ export class UsersController {
       }
       const data = await this.userService.createUser(user);
       await this.prisma.verify_codes.deleteMany({ where: { uid: data.id } });
-      await this.prisma.verify_codes.create({
+      const verifyCode = await this.prisma.verify_codes.create({
         data: {
           id: uuidv4(),
           uid: data.id,
@@ -114,16 +116,35 @@ export class UsersController {
         },
       });
       delete data['password'];
-      return response.send({
-        statusCode: 201,
-        message: 'Successful sign up, verify email sent',
-        data: data,
-      });
+      this.mailerSerivce
+        .sendMail({
+          to: data.email,
+          subject: 'Verify your SmartSheep universal account',
+          template: 'verify',
+          context: {
+            user: data,
+            code: verifyCode.code,
+          },
+        })
+        .then(() => {
+          return response.send({
+            statusCode: 201,
+            message: 'Successful sign up, verify email sent',
+            data: data,
+          });
+        })
+        .catch((error) => {
+          return response.status(500).send({
+            statusCode: 500,
+            message: 'Failed to send email, message: ' + error.message,
+            error: 'ServerError#2',
+          });
+        });
     } catch (e) {
-      return response.status(400).send({
-        statusCode: 400,
+      return response.status(500).send({
+        statusCode: 500,
         message: 'Failed to sign up, database error, message: ' + e.message,
-        error: 'ServerError',
+        error: 'ServerError#1',
       });
     }
   }
