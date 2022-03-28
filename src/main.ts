@@ -18,7 +18,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  await app.listen(3000);
+  await app.listen(3100);
   console.log(`Application is running on: ${await app.getUrl()}`);
   console.log(`Application Documentation is running on: ${await app.getUrl()}/documentation`);
 }

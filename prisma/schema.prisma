@@ -11,11 +11,20 @@ model users {
   id         String   @id @db.VarChar(36)
   username   String   @unique @db.VarChar(80)
   password   String   @db.Text
-  email      String   @db.Text
+  email      String   @unique @db.VarChar(512)
   profile    Json
   group_id   Int
+  is_active  Boolean  @default(false)
   created_at DateTime @default(now()) @db.DateTime(0)
   update_at  DateTime @default(now()) @db.DateTime(0)
+}
+
+model verify_codes {
+  id         String   @id @db.VarChar(36)
+  uid        String   @db.VarChar(36)
+  code       String   @unique @db.VarChar(6)
+  type       String   @default("activation_code") @db.VarChar(20)
+  created_at DateTime @default(now()) @db.DateTime(0)
 }
 
 model groups {
@@ -27,31 +36,31 @@ model groups {
 }
 
 model authorization_clients {
-  id            String    @id
-  client_name   String    @db.VarChar(80)
-  client_id     String    @unique @db.VarChar(36)
-  client_secret String    @db.Text
-  scope         String    @default("all")
+  id            String   @id
+  client_name   String   @db.VarChar(80)
+  client_id     String   @unique @db.VarChar(36)
+  client_secret String   @db.Text
+  scope         String   @default("all")
   developer_id  String
-  avatar        String    @default("https://th.bing.com/th/id/OIP.FZcmYQE0Ghe7D5_gM69olQHaH9?pid=ImgDet&rs=1")
-  created_at    DateTime  @default(now()) @db.DateTime(0)
-  updated_at    DateTime  @default(now()) @db.DateTime(0)
+  avatar        String   @default("https://th.bing.com/th/id/OIP.FZcmYQE0Ghe7D5_gM69olQHaH9?pid=ImgDet&rs=1")
+  created_at    DateTime @default(now()) @db.DateTime(0)
+  updated_at    DateTime @default(now()) @db.DateTime(0)
 }
 
 model authorization_refresh_codes {
-  id            String    @id
-  code          String    @unique @db.VarChar(512)
-  uid           String    @db.VarChar(36)
-  client_id     String    @db.VarChar(36)
-  created_at    DateTime  @default(now()) @db.DateTime(0)
-  updated_at    DateTime  @default(now()) @db.DateTime(0)
+  id         String   @id
+  code       String   @unique @db.VarChar(512)
+  uid        String   @db.VarChar(36)
+  client_id  String   @db.VarChar(36)
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @db.DateTime(0)
 }
 
 model authorization_codes {
-  id            String    @id
-  code          String    @unique @db.VarChar(512)
-  uid           String    @db.VarChar(36)
-  client_id     String    @db.VarChar(36)
-  created_at    DateTime  @default(now()) @db.DateTime(0)
-  updated_at    DateTime  @default(now()) @db.DateTime(0)
+  id         String   @id
+  code       String   @unique @db.VarChar(512)
+  uid        String   @db.VarChar(36)
+  client_id  String   @db.VarChar(36)
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @db.DateTime(0)
 }
