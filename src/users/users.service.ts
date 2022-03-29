@@ -34,7 +34,8 @@ export class UsersService {
       return false;
     }
     if (
-      new Date(code.created_at.getTime() + 1000 * 60 * 60 * 2).getTime() <= Date.now()
+      new Date(code.created_at.getTime() + 1000 * 60 * 60 * 2).getTime() <=
+      Date.now()
     ) {
       return false;
     }
