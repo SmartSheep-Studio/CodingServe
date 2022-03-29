@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common';
+import { JwtAuthGuard } from './../guards/jwt.guard';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Res,
+  UseGuards,
+  Request,
+  HttpStatus,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
 import { JwtService } from '@nestjs/jwt';
@@ -27,6 +38,51 @@ export class OauthController {
       redirect_uri: query['redirect_uri'],
       client: client,
       developer: developer,
+    });
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  async summon_authorization_code(
+    @Body() data: object,
+    @Res() response,
+    @Request() request,
+  ) {
+    if (!data['client_id']) {
+      return response.status(400).send({
+        statusCode: 400,
+        message: 'Missing client_id (AU#C400)',
+        error: 'DataError',
+      });
+    }
+    if (
+      !(await this.prisma.authorization_clients.findUnique({
+        where: { client_id: data['client_id'] },
+      }))
+    ) {
+      return response.status(400).send({
+        statusCode: 400,
+        message: 'Client not found (AU#C404)',
+        error: 'DataError',
+      });
+    }
+    const user = request.user;
+    const token = this.jwtService.sign({ uid: user.id, code: uuidv4() });
+    await this.prisma.authorization_codes.deleteMany({
+      where: { uid: user.id },
+    });
+    await this.prisma.authorization_codes.create({
+      data: {
+        id: uuidv4(),
+        code: token,
+        uid: user.id,
+        client_id: data['client_id'],
+      },
+    });
+    return response.status(200).send({
+      statusCode: 200,
+      message: 'Authorization code generated, grant access successfully',
+      code: token,
     });
   }
 
