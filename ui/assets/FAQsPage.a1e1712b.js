@@ -1,1 +1,0 @@
-import{_ as e}from"./plugin-vue_export-helper.21dcd24c.js";import{o,b as s}from"./vendor.e1b3be29.js";const t={name:"FAQsPage"},a={class:"container"};function r(c,n,_,p,i,f){return o(),s("div",a)}var l=e(t,[["render",r]]);export{l as default};
