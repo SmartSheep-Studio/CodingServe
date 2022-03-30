@@ -1,6 +1,6 @@
 export default {
   date: new Date('2022-03-30T03:38:41.186Z'),
-  hash: '9e90edd9f36c41867680f3fabd4a74c8',
+  hash: '05cb02293e651c171faf7319e7290c07',
   title: 'User Register Rules & Waiver Agreement',
   content: `Hello! Dear want join us's user!
 Before you become a one of us, we need let you know these things:
