@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Post,
   Put,
   Request,
   Res,
@@ -14,7 +15,9 @@ import { Permissions } from '../authorization/guards/permissions.decorator';
 import { authorization_clients as ClientModel } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { DeveloperService } from './developer.service';
+
 import ScopeInformation from './scope.enum';
+import DeveloperAgreement from './developer.agreement';
 
 @Controller('/management/developer')
 export class DeveloperController {
@@ -23,11 +26,38 @@ export class DeveloperController {
     private developerService: DeveloperService,
   ) {}
 
+  @Get('/agreement')
+  async get_developer_agreement() {
+    return {
+      statusCode: 200,
+      agreement: DeveloperAgreement,
+    };
+  }
+
+  @Post('/signup')
+  @HttpCode(201)
+  @UseGuards(JwtAuthGuard)
+  async register_developer(@Request() request) {
+    try {
+      await this.developerService.signup_developer(request.user);
+      return {
+        statusCode: 201,
+        message: 'Developer registered successfully',
+      };
+    } catch (error) {
+      return {
+        statusCode: 400,
+        message: error.message,
+        error: 'DataError',
+      };
+    }
+  }
+
   @Put('/client')
   @HttpCode(201)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('oauth-client management')
-  async registerClient(
+  async register_client(
     @Body() client: ClientModel,
     @Request() request,
     @Res() response: any,
@@ -54,7 +84,7 @@ export class DeveloperController {
 
   @Get('/scopes')
   @HttpCode(200)
-  async getScopeInformation() {
+  async get_scope_information() {
     return {
       statusCode: 200,
       data: {

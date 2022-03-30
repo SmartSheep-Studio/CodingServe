@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthorizationService } from '../authorization/authorization.service';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -10,16 +9,9 @@ import {
 
 @Injectable()
 export class DeveloperService {
-  constructor(
-    private prisma: PrismaService,
-    private authorizationService: AuthorizationService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async signup_developer(username: string, password: string) {
-    const user = await this.authorizationService.validateUser(
-      username,
-      password,
-    );
+  async signup_developer(user: UserModel) {
     if (!user) {
       throw new Error('Failed to sign up, user is not found (AU#CR04)');
     }
