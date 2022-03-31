@@ -1,24 +1,24 @@
-import {Controller, Get, Post, Request, UseGuards} from '@nestjs/common';
-import {LocalAuthGuard} from "./guards/local.guard";
-import {AuthorizationService} from "./authorization.service";
-import {JwtAuthGuard} from "./guards/jwt.guard";
-import {ApiTags} from "@nestjs/swagger";
+import { Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
+import { LocalAuthGuard } from './guards/local.guard';
+import { AuthorizationService } from './authorization.service';
+import { JwtAuthGuard } from './guards/jwt.guard';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('authenticate')
-@ApiTags("授权")
+@ApiTags('授权')
 export class AuthorizationController {
-    constructor(private authorizationService: AuthorizationService) {}
+  constructor(private authorizationService: AuthorizationService) {}
 
-    @Post()
-    @UseGuards(LocalAuthGuard)
-    async getAccessToken(@Request() request) {
-        return this.authorizationService.signJWT(request.user);
-    }
+  @Post()
+  @UseGuards(LocalAuthGuard)
+  async getAccessToken(@Request() request) {
+    return this.authorizationService.signJWT(request.user);
+  }
 
-    @Get('profile')
-    @UseGuards(JwtAuthGuard)
-    async getProfile(@Request() request) {
-        delete request.user['password']
-        return request.user;
-    }
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@Request() request) {
+    delete request.user['password'];
+    return request.user;
+  }
 }

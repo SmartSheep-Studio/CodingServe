@@ -11,12 +11,12 @@ export class StateController {
     return {
       message: 'Welcome access LumbaShark API!',
       data: {
-        'state': 'ok',
-        'server': {
-          'version': packageInfo.version,
-          'description': packageInfo.description,
-          'author': packageInfo.author,
-          'license': packageInfo.license,
+        state: 'ok',
+        server: {
+          version: packageInfo.version,
+          description: packageInfo.description,
+          author: packageInfo.author,
+          license: packageInfo.license,
         },
       },
     };

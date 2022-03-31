@@ -86,7 +86,7 @@ export class OauthController {
   }
 
   @Post('grant')
-  async authorization(@Body() data: object) {
+  async grant_access(@Body() data: object) {
     if (
       !data['grant_type'] ||
       (data['grant_type'] !== 'authorization_code' &&
