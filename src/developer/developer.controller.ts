@@ -5,6 +5,7 @@ import {
   HttpCode,
   Post,
   Put,
+  Query,
   Request,
   Res,
   UseGuards,
@@ -60,7 +61,7 @@ export class DeveloperController {
   @UseGuards(JwtAuthGuard, PermissionsGuard, ScopeGuard)
   @Permissions('oauth-client management')
   @Scopes('read:developer')
-  async get_clients(@Request() request, @Body() data: any) {
+  async get_clients(@Request() request, @Query() data: any) {
     if (data['id']) {
       const client = await this.prisma.authorization_clients.findUnique({
         where: { id: data['id'] },
@@ -72,6 +73,17 @@ export class DeveloperController {
     } else {
       const clients = await this.prisma.authorization_clients.findMany({
         where: { developer_id: request.user.id },
+        select: {
+          client_secret: false,
+          id: true,
+          client_name: true,
+          client_id: true,
+          scope: true,
+          developer_id: true,
+          avatar: true,
+          created_at: true,
+          updated_at: true,
+        },
       });
       return {
         statusCode: 200,
