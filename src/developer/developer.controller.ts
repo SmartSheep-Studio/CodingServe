@@ -18,6 +18,8 @@ import { DeveloperService } from './developer.service';
 
 import ScopeInformation from './scope.enum';
 import DeveloperAgreement from './developer.agreement';
+import { Scopes } from 'src/authorization/guards/scope.decorator';
+import { ScopeGuard } from '../authorization/guards/scope.guard';
 
 @Controller('/management/developer')
 export class DeveloperController {
@@ -53,10 +55,36 @@ export class DeveloperController {
     }
   }
 
+  @Get('/client')
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard, PermissionsGuard, ScopeGuard)
+  @Permissions('oauth-client management')
+  @Scopes('read:developer')
+  async get_clients(@Request() request, @Body() data: any) {
+    if (data['id']) {
+      const client = await this.prisma.authorization_clients.findUnique({
+        where: { id: data['id'] },
+      });
+      return {
+        statusCode: 200,
+        data: client,
+      };
+    } else {
+      const clients = await this.prisma.authorization_clients.findMany({
+        where: { developer_id: request.user.id },
+      });
+      return {
+        statusCode: 200,
+        data: clients,
+      };
+    }
+  }
+
   @Put('/client')
   @HttpCode(201)
-  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard, ScopeGuard)
   @Permissions('oauth-client management')
+  @Scopes('new:developer')
   async register_client(
     @Body() client: ClientModel,
     @Request() request,

@@ -19,15 +19,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    if (payload.type === 'oauth') {
-      const user = await this.usersService.getUserById(payload.user.uid);
-      const client = await this.prisma.authorization_clients.findUnique({
-        where: { client_id: payload.client.id },
-      });
-      delete client['client_secret'];
-      return Object.assign(user, { client: client });
-    } else {
-      return await this.usersService.getUserById(payload.user.uid);
+    try {
+      if (payload.type === 'oauth') {
+        const user = await this.usersService.getUserById(payload.user.uid);
+        const client = await this.prisma.authorization_clients.findUnique({
+          where: { client_id: payload.client.id },
+        });
+        delete client['client_secret'];
+        return Object.assign(user, { client: client });
+      } else {
+        return await this.usersService.getUserById(payload.user.uid);
+      }
+    } catch (e) {
+      return null;
     }
   }
 }

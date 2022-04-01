@@ -1,8 +1,10 @@
 export default {
-  scopes: ['all', 'read:email', 'read:profile'],
+  scopes: ['all', 'read:profile', 'write:developer', 'read:developer'],
   details: {
-    all: 'Do anythings with your account.',
-    'read:email': 'Get your email address.',
-    'read:profile': 'Get your profile.',
+    all: 'Can read and write anythings with your account.',
+    'read:profile': 'Can get your profile information.',
+
+    'write:developer': 'Can create developer client.',
+    'read:developer': 'Can get your developer information.',
   },
 };
