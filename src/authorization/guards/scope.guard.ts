@@ -19,6 +19,12 @@ export class ScopeGuard implements CanActivate {
     if (user.client == null) {
       return true;
     }
+    if (
+      user.client.scope === 'all' ||
+      user.client.scope.split(',').includes('all')
+    ) {
+      return true;
+    }
     const scopes = user.client.scope;
     return requiredScopes.some((scope) => scopes?.includes(scope));
   }
