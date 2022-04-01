@@ -62,8 +62,18 @@ export class DeveloperController {
     @Request() request,
     @Res() response: any,
   ) {
-    for (const scope in client.scope.split(',')) {
-      if (!ScopeInformation.scopes.includes(scope)) {
+    if (client.scope.split(',').length !== 1) {
+      for (const scope in client.scope.split(',')) {
+        if (!ScopeInformation.scopes.includes(scope)) {
+          return response.status(400).send({
+            statusCode: 400,
+            message: 'Scope is invalid',
+            error: 'DataError',
+          });
+        }
+      }
+    } else {
+      if (!ScopeInformation.scopes.includes(client.scope)) {
         return response.status(400).send({
           statusCode: 400,
           message: 'Scope is invalid',

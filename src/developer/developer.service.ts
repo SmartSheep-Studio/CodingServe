@@ -38,12 +38,12 @@ export class DeveloperService {
 
   async register_client(developer: UserModel, client: ClientModel) {
     client.id = uuidv4();
-    const origin_secret = uuidv4().replaceAll('-', '').toUpperCase();
+    const origin_secret = uuidv4().replace('-', '').toUpperCase();
     client.client_secret = await bcrypt.hash(
       origin_secret,
       await bcrypt.genSalt(),
     );
-    client.client_id = uuidv4().replaceAll('-', '').toUpperCase();
+    client.client_id = uuidv4().replace('-', '').toUpperCase();
     client.developer_id = developer.id;
     const data = await this.prisma.authorization_clients.create({
       data: client,

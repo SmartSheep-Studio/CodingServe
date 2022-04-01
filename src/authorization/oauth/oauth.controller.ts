@@ -12,10 +12,15 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
 import { JwtService } from '@nestjs/jwt';
+import { AuthorizationService } from '../authorization.service';
 
 @Controller('oauth')
 export class OauthController {
-  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+    private authorzationService: AuthorizationService,
+  ) {}
 
   @Get()
   async signin(@Query() query: object, @Res() response) {
@@ -144,6 +149,9 @@ export class OauthController {
         where: { uid: user.id },
       });
     }
+    const client = await this.prisma.authorization_clients.findUnique({
+      where: { client_id: token['client_id'] },
+    });
     const refreshCode = this.jwtService.sign(
       { uid: user.id, code: uuidv4() },
       { expiresIn: '10y' },
@@ -156,12 +164,12 @@ export class OauthController {
         client_id: token['client_id'],
       },
     });
-    const accessToken = this.jwtService.sign(
-      { username: user.username, uid: user.id },
-      { expiresIn: '30d' },
+    const accessToken = await this.authorzationService.signClientJWT(
+      client,
+      user,
     );
     return {
-      access_token: accessToken,
+      access_token: accessToken.token,
       refresh_token: refreshCode,
       expires_in: 30 * 24 * 60 * 60,
       token_type: 'Bearer',

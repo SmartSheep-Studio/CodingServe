@@ -2,7 +2,10 @@ import * as bcrypt from 'bcrypt';
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { users as UserModel } from '@prisma/client';
+import {
+  users as UserModel,
+  authorization_clients as ClientModel,
+} from '@prisma/client';
 
 @Injectable()
 export class AuthorizationService {
@@ -24,8 +27,22 @@ export class AuthorizationService {
     return null;
   }
 
-  async signJWT(user: any) {
-    const payload = { username: user.username, uid: user.id };
+  async signJWT(user: UserModel) {
+    const payload = {
+      type: 'signin',
+      user: { username: user.username, uid: user.id },
+    };
+    return {
+      token: this.jwtService.sign(payload),
+    };
+  }
+
+  async signClientJWT(client: ClientModel, user: UserModel) {
+    const payload = {
+      type: 'oauth',
+      user: { username: user.username, uid: user.id },
+      client: { id: client.client_id, name: client.client_name },
+    };
     return {
       token: this.jwtService.sign(payload),
     };
