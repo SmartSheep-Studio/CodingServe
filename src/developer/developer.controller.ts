@@ -67,8 +67,14 @@ export class DeveloperController {
       const client = await this.prisma.authorization_clients.findUnique({
         where: { id: data['id'] },
       });
+      const granted_users = await this.prisma.authorization_refresh_codes.count(
+        { where: { client_id: client.client_id } },
+      );
       return {
         statusCode: 200,
+        statistics: {
+          grantedUsers: granted_users,
+        },
         data: client,
       };
     } else {
@@ -86,8 +92,17 @@ export class DeveloperController {
           updated_at: true,
         },
       });
+      let granted_users = 0;
+      for (const client of clients) {
+        granted_users += await this.prisma.authorization_refresh_codes.count({
+          where: { client_id: client.client_id },
+        });
+      }
       return {
         statusCode: 200,
+        statistics: {
+          grantedUsers: granted_users,
+        },
         data: clients,
       };
     }
@@ -157,8 +172,8 @@ export class DeveloperController {
     // Unique scopes
     client.scope = Array.from(new Set(client.scope.split(','))).join(',');
 
-    if (client.scope.split(',').length !== 1) {
-      for (const scope in client.scope.split(',')) {
+    if (client.scope.split(',').length > 1) {
+      for (const scope of client.scope.split(',')) {
         if (!ScopeInformation.scopes.includes(scope)) {
           return response.status(400).send({
             statusCode: 400,
