@@ -5,6 +5,7 @@ import {
   HttpCode,
   Post,
   Put,
+  Delete,
   Query,
   Request,
   Res,
@@ -92,16 +93,70 @@ export class DeveloperController {
     }
   }
 
+  @Delete('/client')
+  @HttpCode(202)
+  @UseGuards(JwtAuthGuard, PermissionsGuard, ScopeGuard)
+  @Permissions('oauth-client management')
+  @Scopes('remove:developer')
+  async delete_client(@Query() data: any, @Res() response) {
+    if (!data['id']) {
+      return response.status(400).send({
+        statusCode: '400',
+        message: 'ID is required',
+        error: 'DataError',
+      });
+    }
+    const client = await this.prisma.authorization_clients.findUnique({
+      where: { client_id: data['id'] },
+    });
+    if (!client) {
+      return response.status(400).send({
+        statusCode: '400',
+        message: 'Cannot found client',
+        error: 'DataError',
+      });
+    }
+
+    // Delete associated codes
+    await this.prisma.authorization_codes.deleteMany({
+      where: { client_id: client.client_id },
+    });
+    await this.prisma.authorization_refresh_codes.deleteMany({
+      where: { client_id: client.client_id },
+    });
+
+    // Delete client
+    await this.prisma.authorization_clients.delete({
+      where: { client_id: data['id'] },
+    });
+    return response.send({
+      statusCode: 202,
+      message:
+        'Client deleted successfully, all associated codes is deleted too',
+    });
+  }
+
   @Put('/client')
   @HttpCode(201)
   @UseGuards(JwtAuthGuard, PermissionsGuard, ScopeGuard)
   @Permissions('oauth-client management')
-  @Scopes('new:developer')
+  @Scopes('write:developer')
   async register_client(
     @Body() client: ClientModel,
     @Request() request,
     @Res() response: any,
   ) {
+    if (client.scope == null) {
+      return response.status(400).send({
+        statusCode: 400,
+        message: 'Scope is invalid',
+        error: 'DataError',
+      });
+    }
+
+    // Unique scopes
+    client.scope = Array.from(new Set(client.scope.split(','))).join(',');
+
     if (client.scope.split(',').length !== 1) {
       for (const scope in client.scope.split(',')) {
         if (!ScopeInformation.scopes.includes(scope)) {
