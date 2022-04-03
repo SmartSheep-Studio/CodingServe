@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
-const packageInfo = require('../../package.json');
+import * as packageInfo from '../../package.json';
 
 @Controller('/')
 @ApiTags('状态')
