@@ -1,5 +1,5 @@
 {
-  "name": "halo-server",
+  "name": "lumbashark",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -8,6 +8,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
+    "build:docker": "docker build --no-cache -t lumbashark .",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",

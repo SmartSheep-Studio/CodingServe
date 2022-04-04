@@ -2,6 +2,29 @@
 
 LumbaShark is a very sharp Authorization management system, compatible with OAuth2 Authorization Code mode
 
+## Getting Start
+
+1. Pulling our docker image
+2. Run the docker image
+
+```bash
+# With out daemon
+docker run --name lumbashark -p 3100:3100 -e DATABASE_URL="mysql://root:root@192.168.50.215:3306/lumbashark?schema=public" lumbashark:latest
+# With in daemon
+docker run --name lumbashark -p 3100:3100 -e DATABASE_URL="mysql://root:root@192.168.50.215:3306/lumbashark?schema=public" -d lumbashark:latest
+# Start when server start
+docker run --name lumbashark -p 3100:3100 -e DATABASE_URL="mysql://root:root@192.168.50.215:3306/lumbashark?schema=public" --restart=always -d lumbashark:latest
+```
+
+3. Init scheme for the database(Upgrade with out this step)
+
+```bash
+docker exec -it <Your container id> /bin/sh
+yarn prisma db push
+```
+
+4. All are done!
+
 ## Authenticate
 
 ### Groups
