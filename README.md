@@ -5,6 +5,11 @@ LumbaShark is a very sharp Authorization management system, compatible with OAut
 ## Getting Start
 
 1. Pulling our docker image
+
+```bash
+docker pull xsheep2010/lumbashark:latest
+```
+
 2. Run the docker image
 
 ```bash
@@ -24,6 +29,13 @@ yarn prisma db push
 ```
 
 4. All are done!
+
+## Building
+
+1. Install [Docker Engine](https://docs.docker.com/engine/install/) or [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+2. Download our [SharkUI](https://gitee.com/smartsheep-studio/SharkUI) and build it with `npm i && npm run build:docker` or `yarn && yarn build`
+3. Copy the build dist to the project root and rename it to `ui`
+4. Run command `npm run build:docker` or `yarn build:docker`
 
 ## Authenticate
 

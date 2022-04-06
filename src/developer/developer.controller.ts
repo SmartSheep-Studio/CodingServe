@@ -17,9 +17,7 @@ import { Permissions } from '../authorization/guards/permissions.decorator';
 import { authorization_clients as ClientModel } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { DeveloperService } from './developer.service';
-
 import ScopeInformation from './scope.enum';
-import DeveloperAgreement from './developer.agreement';
 import { Scopes } from 'src/authorization/guards/scope.decorator';
 import { ScopeGuard } from '../authorization/guards/scope.guard';
 
@@ -29,14 +27,6 @@ export class DeveloperController {
     private prisma: PrismaService,
     private developerService: DeveloperService,
   ) {}
-
-  @Get('/agreement')
-  async get_developer_agreement() {
-    return {
-      statusCode: 200,
-      agreement: DeveloperAgreement,
-    };
-  }
 
   @Post('/signup')
   @HttpCode(201)

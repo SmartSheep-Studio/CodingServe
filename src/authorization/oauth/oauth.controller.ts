@@ -13,13 +13,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
 import { JwtService } from '@nestjs/jwt';
 import { AuthorizationService } from '../authorization.service';
+import * as bcrpyt from 'bcrypt';
 
 @Controller('oauth')
 export class OauthController {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    private authorzationService: AuthorizationService,
+    private authorizationService: AuthorizationService,
   ) {}
 
   @Get()
@@ -91,22 +92,24 @@ export class OauthController {
   }
 
   @Post('grant')
-  async grant_access(@Body() data: object) {
+  async grant_access(@Body() data: object, @Res() response) {
     if (
       !data['grant_type'] ||
       (data['grant_type'] !== 'authorization_code' &&
         data['grant_type'] !== 'refresh_token')
     ) {
-      return { error: 'Unsupported grant type (AU#C400)' };
+      return response
+        .status(400)
+        .send({ error: 'Unsupported grant type (AU#C400)' });
     }
-    let token, user;
+    let token, user, client;
     if (data['grant_type'] === 'refresh_token') {
       if (
         !data['refresh_token'] ||
         !this.jwtService.verify(data['refresh_token'])
       ) {
         return {
-          message: 'Invaild refresh token (AU#CA50)',
+          message: 'Invalid refresh token (AU#CA50)',
           error: 'DataError',
         };
       }
@@ -115,10 +118,13 @@ export class OauthController {
       });
       if (!token) {
         return {
-          message: 'Invaild auhtorization code (AU#CA50)',
+          message: 'Invalid authorization code (AU#CA50)',
           error: 'DataError',
         };
       }
+      client = await this.prisma.authorization_clients.findUnique({
+        where: { client_id: token['client_id'] },
+      });
       user = await this.prisma.users.findUnique({
         where: { id: token['uid'] },
       });
@@ -128,19 +134,30 @@ export class OauthController {
     }
     if (data['grant_type'] === 'authorization_code') {
       if (!data['code'] || !this.jwtService.verify(data['code'])) {
-        return {
-          message: 'Invaild authorization code (AU#CA50)',
+        return response.status(400).send({
+          message: 'Invalid authorization code (AU#CA50)',
           error: 'DataError',
-        };
+        });
       }
       token = await this.prisma.authorization_codes.findUnique({
         where: { code: data['code'] },
       });
       if (!token) {
-        return {
-          message: 'Invaild auhtorization code (AU#CA50)',
+        return response.status(400).send({
+          message: 'Invalid authorization code (AU#CA50)',
           error: 'DataError',
-        };
+        });
+      }
+      client = await this.prisma.authorization_clients.findUnique({
+        where: { client_id: token['client_id'] },
+      });
+      if (
+        !(await bcrpyt.compare(data['client_secret'], client.client_secret))
+      ) {
+        return response.status(400).send({
+          message: 'Invalid client secret (AU#CA51)',
+          error: 'DataError',
+        });
       }
       user = await this.prisma.users.findUnique({
         where: { id: token['uid'] },
@@ -149,9 +166,6 @@ export class OauthController {
         where: { uid: user.id },
       });
     }
-    const client = await this.prisma.authorization_clients.findUnique({
-      where: { client_id: token['client_id'] },
-    });
     const refreshCode = this.jwtService.sign(
       { uid: user.id, code: uuidv4() },
       { expiresIn: '10y' },
@@ -164,15 +178,15 @@ export class OauthController {
         client_id: token['client_id'],
       },
     });
-    const accessToken = await this.authorzationService.signClientJWT(
+    const accessToken = await this.authorizationService.signClientJWT(
       client,
       user,
     );
-    return {
+    return response.send({
       access_token: accessToken.token,
       refresh_token: refreshCode,
       expires_in: 30 * 24 * 60 * 60,
       token_type: 'Bearer',
-    };
+    });
   }
 }

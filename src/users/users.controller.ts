@@ -19,7 +19,6 @@ import { users as UserModel } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from './users.service';
-import UserAgreement from './users.agreement';
 
 @Controller('/management/users')
 export class UsersController {
@@ -29,16 +28,8 @@ export class UsersController {
     private userService: UsersService,
   ) {}
 
-  @Get('/agreement')
-  async get_developer_agreement() {
-    return {
-      statusCode: 200,
-      agreement: UserAgreement,
-    };
-  }
-
   /**
-   * Diffrent by "User create" function, this function is use to signup,
+   * Different by "User create" function, this function is use to signup,
    * it require a email, username, and password, then will send a code to verify your email.
    * Next time request just need give verify code to register.
    * @param id
