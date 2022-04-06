@@ -7,7 +7,7 @@ LumbaShark is a very sharp Authorization management system, compatible with OAut
 1. Pulling our docker image
 
 ```bash
-docker pull xsheep2010/lumbashark:latest
+docker pull xsheep2010/lumbashark:1.2.0
 ```
 
 2. Run the docker image
