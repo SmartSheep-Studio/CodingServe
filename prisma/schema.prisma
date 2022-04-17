@@ -8,16 +8,18 @@ datasource db {
 }
 
 model users {
-  id         String   @id @db.VarChar(36)
-  username   String   @unique @db.VarChar(80)
-  password   String   @db.Text
-  email      String   @unique @db.VarChar(512)
-  profile    Json
-  group_id   Int
-  is_active  Boolean  @default(false)
-  is_locked  Boolean  @default(false)
-  created_at DateTime @default(now()) @db.DateTime(0)
-  update_at  DateTime @default(now()) @db.DateTime(0)
+  id               String   @id @db.VarChar(36)
+  username         String   @unique @db.VarChar(80)
+  password         String   @db.Text
+  email            String   @unique @db.VarChar(512)
+  profile          Json
+  level            Int      @default(1)
+  level_experience Int      @default(0)
+  group_id         Int
+  is_active        Boolean  @default(false)
+  is_locked        Boolean  @default(false)
+  created_at       DateTime @default(now()) @db.DateTime(0)
+  update_at        DateTime @default(now()) @db.DateTime(0)
 }
 
 model verify_codes {

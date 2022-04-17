@@ -26,14 +26,12 @@ export class UsersController {
     private prisma: PrismaService,
     private mailerSerivce: MailerService,
     private userService: UsersService,
-  ) {}
+  ) { }
 
   /**
    * Different by "User create" function, this function is use to signup,
    * it require a email, username, and password, then will send a code to verify your email.
    * Next time request just need give verify code to register.
-   * @param id
-   * @returns
    */
   @Post()
   @HttpCode(201)
@@ -180,7 +178,7 @@ export class UsersController {
     if (
       user.group_id !== 0 &&
       (await this.prisma.groups.findUnique({ where: { id: user.group_id } })) ==
-        null
+      null
     ) {
       return response.status(400).send({
         statusCode: 400,
@@ -208,7 +206,7 @@ export class UsersController {
     if (
       user.group_id !== 0 &&
       (await this.prisma.groups.findUnique({ where: { id: user.group_id } })) ==
-        null
+      null
     ) {
       return response.status(400).send({
         statusCode: 400,
