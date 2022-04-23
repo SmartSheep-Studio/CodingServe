@@ -9,6 +9,7 @@ import {
   Put,
   Res,
   UseGuards,
+  Request,
   Query,
 } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -198,26 +199,27 @@ export class UsersController {
 
   @Patch()
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @Permissions('user update')
-  async update_user(@Body() user: UserModel, @Res() response) {
-    if (typeof user.group_id !== 'number') {
-      user.group_id = 0;
-    }
-    if (
-      user.group_id !== 0 &&
-      (await this.prisma.groups.findUnique({ where: { id: user.group_id } })) ==
-      null
-    ) {
-      return response.status(400).send({
-        statusCode: 400,
-        message: 'Provided group_id is invalid.',
-        error: 'DataError',
-      });
+  async update_user(@Body() user: UserModel, @Request() request, @Res() response) {
+    if(user.group_id != null) {
+      if (typeof user.group_id !== 'number') {
+        user.group_id = 0;
+      }
+      if (
+        user.group_id !== 0 &&
+        (await this.prisma.groups.findUnique({ where: { id: user.group_id } })) ==
+        null
+      ) {
+        return response.status(400).send({
+          statusCode: 400,
+          message: 'Provided group_id is invalid.',
+          error: 'DataError',
+        });
+      }
     }
 
     user.update_at = new Date();
     const data = await this.prisma.users.update({
-      where: { id: user.id },
+      where: { id: request.user.id },
       data: user,
     });
     delete data['password'];
