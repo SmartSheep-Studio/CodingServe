@@ -27,7 +27,7 @@ export class UsersController {
     private prisma: PrismaService,
     private mailerSerivce: MailerService,
     private userService: UsersService,
-  ) { }
+  ) {}
 
   /**
    * Different by "User create" function, this function is use to signup,
@@ -179,7 +179,7 @@ export class UsersController {
     if (
       user.group_id !== 0 &&
       (await this.prisma.groups.findUnique({ where: { id: user.group_id } })) ==
-      null
+        null
     ) {
       return response.status(400).send({
         statusCode: 400,
@@ -199,15 +199,20 @@ export class UsersController {
 
   @Patch()
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  async update_user(@Body() user: UserModel, @Request() request, @Res() response) {
-    if(user.group_id != null) {
+  async update_user(
+    @Body() user: UserModel,
+    @Request() request,
+    @Res() response,
+  ) {
+    if (user.group_id != null) {
       if (typeof user.group_id !== 'number') {
         user.group_id = 0;
       }
       if (
         user.group_id !== 0 &&
-        (await this.prisma.groups.findUnique({ where: { id: user.group_id } })) ==
-        null
+        (await this.prisma.groups.findUnique({
+          where: { id: user.group_id },
+        })) == null
       ) {
         return response.status(400).send({
           statusCode: 400,
