@@ -9,9 +9,8 @@ COPY package*.json ./
 # RUN npm ci
 
 COPY --chown=node:node . .
-RUN npm install \
-    && npm run build \
-    && npm prune --production
+RUN yarn install \
+    && yarn run build
 
 FROM node:16-alpine
 
