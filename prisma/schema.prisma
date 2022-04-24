@@ -16,6 +16,7 @@ model users {
   level            Int      @default(1)
   level_experience Int      @default(0)
   group_id         Int
+  bank_id          String
   is_active        Boolean  @default(false)
   is_locked        Boolean  @default(false)
   created_at       DateTime @default(now()) @db.DateTime(0)
@@ -66,4 +67,14 @@ model authorization_codes {
   client_id  String   @db.VarChar(36)
   created_at DateTime @default(now()) @db.DateTime(0)
   updated_at DateTime @default(now()) @db.DateTime(0)
+}
+
+model bank_currency {
+  id           String   @id
+  code         String   @unique
+  description  String   @default("Lazy developer, didn't write any things")
+  developer_id String
+  avatar       String   @default("https://th.bing.com/th/id/OIP.FZcmYQE0Ghe7D5_gM69olQHaH9?pid=ImgDet&rs=1")
+  created_at   DateTime @default(now()) @db.DateTime(0)
+  updated_at   DateTime @default(now()) @db.DateTime(0)
 }

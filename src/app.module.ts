@@ -3,11 +3,12 @@ import { StateController } from './state/state.controller';
 import { AuthorizationModule } from './authorization/authorization.module';
 import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
-import { DeveloperModule } from './developer/developer.module';
+import { DeveloperModule } from './developers/developers.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { BankModule } from './banks/banks.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { join } from 'path';
     UsersModule,
     PrismaModule,
     DeveloperModule,
+    BankModule,
   ],
   controllers: [StateController],
   providers: [],

@@ -9,8 +9,8 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   const config = new DocumentBuilder()
-    .setTitle('HaloServer')
-    .setDescription('HaloBMS 的后台服务器')
+    .setTitle('SharkServer')
+    .setDescription('LumbaShark 核心服务器')
     .setVersion(packageInfo.version)
     .build();
   const document = SwaggerModule.createDocument(app, config);

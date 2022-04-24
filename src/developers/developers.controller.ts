@@ -16,7 +16,7 @@ import { PermissionsGuard } from '../authorization/guards/permissions.guard';
 import { Permissions } from '../authorization/guards/permissions.decorator';
 import { authorization_clients as ClientModel } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { DeveloperService } from './developer.service';
+import { DeveloperService } from './developers.service';
 import ScopeInformation from './scope.enum';
 import { Scopes } from 'src/authorization/guards/scope.decorator';
 import { ScopeGuard } from '../authorization/guards/scope.guard';
