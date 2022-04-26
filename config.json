@@ -1,0 +1,9 @@
+{
+  "port": "3100",
+  "database": {
+    "username": "root",
+    "password": "password",
+    "host": "localhost:3306",
+    "database": "codingland"
+  }
+}
