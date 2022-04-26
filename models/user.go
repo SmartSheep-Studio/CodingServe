@@ -11,11 +11,11 @@ type User struct {
 	Password    string         `gorm:"type:varchar(64);not null"`
 	Attributes  datatypes.JSON `gorm:"not null"`
 	Description string         `gorm:"type:varchar(512)"`
-	Birthday    time.Time      `gorm:"not null"`
-	GroupID     string         `gorm:"type:varchar(36)"`
-	BankID      string         `gorm:"type:varchar(36)"`
-	IsActive    bool           `gorm:"not null;default:false"`
-	IsLocked    bool           `gorm:"not null;default:true"`
-	UpdatedAt   time.Time      `gorm:"autoUpdateTime:milli"`
-	CreatedAt   time.Time      `gorm:"autoCreateTime"`
+	Birthday    time.Time
+	GroupID     string    `gorm:"type:varchar(36)"`
+	BankID      string    `gorm:"type:varchar(36)"`
+	IsActive    bool      `gorm:"not null;default:false"`
+	IsLocked    bool      `gorm:"not null;default:true"`
+	UpdatedAt   time.Time `gorm:"autoUpdateTime:milli"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
 }
