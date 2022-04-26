@@ -4,6 +4,7 @@ import "time"
 
 type OauthClient struct {
 	ID           int64     `gorm:"primary_key"`
+	Description  string    `gorm:"type:varchar(512);not null"`
 	ClientID     string    `gorm:"type:varchar(36);not null"`
 	ClientSercet string    `gorm:"type:varchar(36);not null"`
 	ClientName   string    `gorm:"type:varchar(50);not null"`

@@ -10,5 +10,9 @@ func Migrate() {
 
 		&models.OauthToken{},
 		&models.OauthClient{},
+
+		&models.BankAccount{},
+		&models.BankCurrency{},
+		&models.BankTransfer{},
 	)
 }
