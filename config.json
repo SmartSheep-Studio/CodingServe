@@ -4,6 +4,6 @@
     "username": "root",
     "password": "password",
     "host": "localhost:3306",
-    "database": "codingland"
+    "basename": "codingland"
   }
 }
