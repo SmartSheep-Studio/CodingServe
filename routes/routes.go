@@ -2,9 +2,10 @@ package routes
 
 import (
 	"github.com/kataras/iris/v12"
-
-	"codingserve/controllers"
 	"github.com/kataras/iris/v12/mvc"
+
+	controllers "codingserve/controllers"
+	securityControllers "codingserve/controllers/security"
 )
 
 func Init(app *iris.Application) {
@@ -17,10 +18,7 @@ func Init(app *iris.Application) {
 
 	// Register APIs
 	prefix := "/api"
-	apiHandlers := app.Party(prefix)
-	{
-		apiHandlers.Use(iris.Compression)
+	mvc.New(app.Party(prefix)).Handle(new(controllers.StatusController))
 
-		mvc.New(apiHandlers).Handle(new(controllers.StatusController))
-	}
+	mvc.New(app.Party(prefix + "/security/users")).Handle(new(securityControllers.UserController))
 }
