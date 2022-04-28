@@ -1,16 +1,18 @@
 package controllers
 
-import "github.com/kataras/iris/v12"
+import (
+	"net/http"
 
-type StatusController struct{}
+	"github.com/gin-gonic/gin"
+)
 
-func (c *StatusController) Get() iris.Map {
-	return iris.Map{
+func GetServerStatus(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
 		"code":   "SERVEOK",
 		"status": "working",
-		"server": iris.Map{
+		"server": gin.H{
 			"version":     "2.0.0",
 			"version-tag": "development",
 		},
-	}
+	})
 }

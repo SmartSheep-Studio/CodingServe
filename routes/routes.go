@@ -1,24 +1,32 @@
 package routes
 
 import (
-	"github.com/kataras/iris/v12"
-	"github.com/kataras/iris/v12/mvc"
+	"github.com/gin-gonic/gin"
 
-	controllers "codingserve/controllers"
+	rootControllers "codingserve/controllers"
 	securityControllers "codingserve/controllers/security"
 )
 
-func Init(app *iris.Application) {
-
-	// Render CodingUI
-	app.HandleDir("/assets", iris.Dir("./public/assets"))
-	app.HandleDir("/", iris.Dir("./public"), iris.DirOptions{
-		ShowList: true, Compress: true, IndexName: "index.html",
-	})
+func Init(app *gin.Engine) {
 
 	// Register APIs
 	prefix := "/api"
-	mvc.New(app.Party(prefix)).Handle(new(controllers.StatusController))
 
-	mvc.New(app.Party(prefix + "/security/users")).Handle(new(securityControllers.UserController))
+	apiHandlers := app.Group(prefix)
+	{
+		apiHandlers.GET("", rootControllers.GetServerStatus)
+
+		securityHandlers := apiHandlers.Group("/security")
+		{
+			controller := securityControllers.NewUserController()
+			securityHandlers.POST("/users", controller.SignUpNewUser)	
+		}
+	}
+
+	// Render CodingUI
+	app.Static("/favicon.ico", "./public/favicon.ico")
+	app.Static("/assets", "./public/assets")
+	app.NoRoute(func(c *gin.Context) {
+		c.File("./public/index.html")
+	})
 }

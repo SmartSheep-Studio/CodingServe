@@ -6,25 +6,28 @@ import (
 	"codingserve/routes"
 	"flag"
 
-	"github.com/kataras/iris/v12"
+	"github.com/gin-gonic/gin"
 )
 
+var err error
 func main() {
 
 	// Read the command line command
 	flag.Parse()
 
-	// Create IRIS application
-	app := iris.Default()
-	app.Favicon("./public/favicon.ico")
+	// Create application
+	app := gin.Default()
 
 	// Register routes
 	routes.Init(app)
 
 	// Migrate databases
-	datasource.Migrate()
+	err = datasource.Migrate()
+	if err != nil {
+		panic(err)
+	}
 
-	err := app.Listen(":" + configs.SysConfig.Port)
+	err = app.Run(":" + configs.SysConfig.Port)
 	if err != nil {
 		panic(err)
 	}
