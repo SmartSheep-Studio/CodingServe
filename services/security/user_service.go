@@ -13,12 +13,16 @@ import (
 
 type UserService struct {
 	connection *gorm.DB
+
+	verifyCodeService *VerifyCodeService
 	passwordService *services.PasswordService
 }
 
 func NewUserService() *UserService {
 	service := &UserService{
 		connection: datasource.GetConnection(),
+
+		verifyCodeService: &VerifyCodeService{},
 		passwordService: &services.PasswordService{},
 	}
 	return service
@@ -36,17 +40,14 @@ func (self *UserService) CreateUser(user models.User, force bool) bool {
 		if err != nil {
 			return false
 		} else {
-			err = self.connection.Create(&verify).Error
-			if err != nil {
+			if !self.verifyCodeService.SendVerifyCode(verify) {
 				return false
 			}
 		}
 	} else {
 		model := models.User{ID: userUuid.String(), Username: user.Username, Password: userPassword, Email: user.Email, Attributes: datatypes.JSON([]byte(`{}`)), IsActive: true}
 		err := self.connection.Create(&model).Error
-		if err != nil {
-			return false
-		}
+		return err != nil
 	}
 
 	return true
@@ -65,5 +66,15 @@ func (self *UserService) ActiveUser(code string) bool {
 		}
 	}
 
-	return true
+	if !self.verifyCodeService.IsVerifyCodeAvailable(verifyCode) {
+		return false
+	}
+
+	verifyUser.IsActive = true
+	if !self.verifyCodeService.DeleteVerifyCode(verifyCode) {
+	  err = self.connection.Save(&verifyUser).Error
+		return err != nil
+	} else {
+		return false
+	}
 }
