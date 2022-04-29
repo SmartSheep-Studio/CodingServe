@@ -12,8 +12,8 @@ type VerifyCodeService struct {
 	connection *gorm.DB
 }
 
-func NewVerifyCodeService() *UserService {
-	service := &UserService{
+func NewVerifyCodeService() *VerifyCodeService {
+	service := &VerifyCodeService{
 		connection: datasource.GetConnection(),
 	}
 	return service

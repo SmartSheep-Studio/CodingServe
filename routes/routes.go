@@ -19,7 +19,8 @@ func Init(app *gin.Engine) {
 		securityHandlers := apiHandlers.Group("/security")
 		{
 			controller := securityControllers.NewUserController()
-			securityHandlers.POST("/users", controller.SignUpNewUser)	
+			securityHandlers.POST("/users", controller.SignUpNewUser)
+			securityHandlers.POST("/users/active", controller.ActiveNewUser)	
 		}
 	}
 

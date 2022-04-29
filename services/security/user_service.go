@@ -22,7 +22,7 @@ func NewUserService() *UserService {
 	service := &UserService{
 		connection: datasource.GetConnection(),
 
-		verifyCodeService: &VerifyCodeService{},
+		verifyCodeService: NewVerifyCodeService(),
 		passwordService: &services.PasswordService{},
 	}
 	return service
@@ -73,7 +73,7 @@ func (self *UserService) ActiveUser(code string) bool {
 	verifyUser.IsActive = true
 	if !self.verifyCodeService.DeleteVerifyCode(verifyCode) {
 	  err = self.connection.Save(&verifyUser).Error
-		return err != nil
+		return err == nil
 	} else {
 		return false
 	}
