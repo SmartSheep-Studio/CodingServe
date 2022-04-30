@@ -6,6 +6,7 @@ import (
 	"codingserve/services"
 	"strings"
 
+	"github.com/casbin/casbin/v2"
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -13,17 +14,19 @@ import (
 
 type UserService struct {
 	connection *gorm.DB
+	enforcer   *casbin.Enforcer
 
 	verifyCodeService *VerifyCodeService
-	passwordService *services.PasswordService
+	passwordService   *services.PasswordService
 }
 
 func NewUserService() *UserService {
 	service := &UserService{
 		connection: datasource.GetConnection(),
+		enforcer:   datasource.GetEnforcer(),
 
 		verifyCodeService: NewVerifyCodeService(),
-		passwordService: &services.PasswordService{},
+		passwordService:   &services.PasswordService{},
 	}
 	return service
 }
@@ -59,7 +62,7 @@ func (self *UserService) ActiveUser(code string) bool {
 	var verifyCode models.VerifyCode
 	var verifyUser models.User
 	if err = self.connection.Where(models.VerifyCode{Code: code}).First(&verifyCode).Error; err != nil {
-    return false
+		return false
 	} else {
 		if err = self.connection.Where(models.User{ID: verifyCode.UID}).First(&verifyUser).Error; err != nil {
 			return false
@@ -72,9 +75,39 @@ func (self *UserService) ActiveUser(code string) bool {
 
 	verifyUser.IsActive = true
 	if !self.verifyCodeService.DeleteVerifyCode(verifyCode) {
-	  err = self.connection.Save(&verifyUser).Error
+		err = self.connection.Save(&verifyUser).Error
 		return err == nil
 	} else {
 		return false
 	}
+}
+
+func (self *UserService) AddUserIntoGroup(user models.User, group models.Group) bool {
+	if user.GroupID != "" {
+		return false
+	}
+
+	user.GroupID = group.ID
+	self.enforcer.AddPermissionsForUser(user.ID, strings.Split(group.Permissions, ","))
+	return self.connection.Save(&user).Error == nil
+}
+
+func (self *UserService) RemoveUserFromGroup(user models.User, group models.Group) bool {
+	if user.GroupID == "" {
+		return false
+	}
+
+	user.GroupID = ""
+	for _, object := range strings.Split(group.Permissions, ",") {
+		self.enforcer.DeletePermissionForUser(user.ID, object)
+	}
+	return self.connection.Save(&user).Error == nil
+}
+
+func (self *UserService) AddUserPermission(user models.User, permission string) {
+	self.enforcer.AddPermissionForUser(user.ID, permission)
+}
+
+func (self *UserService) RemoveUserPermission(user models.User, permission string) {
+	self.enforcer.DeletePermissionForUser(user.ID, permission)
 }

@@ -10,6 +10,7 @@ import (
 )
 
 var err error
+
 func main() {
 
 	// Read the command line command
@@ -26,6 +27,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	datasource.InitAdapter()
 
 	err = app.Run(":" + configs.SysConfig.Port)
 	if err != nil {
