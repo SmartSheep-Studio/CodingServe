@@ -1,5 +1,6 @@
 {
   "port": "3100",
+  "secret": "THISISAVERIYSECRET",
   "database": {
     "username": "root",
     "password": "password",

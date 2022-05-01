@@ -20,7 +20,8 @@ func Init(app *gin.Engine) {
 		{
 			controller := securityControllers.NewUserController()
 			securityHandlers.POST("/users", controller.SignUpNewUser)
-			securityHandlers.POST("/users/active", controller.ActiveNewUser)	
+			securityHandlers.POST("/users/login", controller.LoginUser)
+			securityHandlers.POST("/users/active", controller.ActiveNewUser)
 		}
 	}
 

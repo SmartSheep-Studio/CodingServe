@@ -22,5 +22,6 @@ func init() {
 
 type sysconfig struct {
 	Port     string   `json:"port"`
+	Secret   string   `json:"secret"`
 	DataBase dbconfig `json:"database"`
 }

@@ -1,20 +1,27 @@
 package security
 
 import (
+	"codingserve/datasource"
+	"codingserve/models"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/storyicon/grbac"
+	"github.com/golang-jwt/jwt/v4"
 )
 
-func BearerIntrospection() gin.HandlerFunc {
+func UserVerifyHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authorization := c.Request.Header.Get("Authorization")
 		if authorization == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"message": "Authorization failure, require Authorization header",
-				"code":    "UNAUTH",
+				"Status": gin.H{
+					"Message":       "Authorization failed",
+					"MessageDetail": "Require Authorization Header",
+					"Code":          "BADREQ",
+				},
+				"Response": nil,
 			})
 			c.Abort()
 			return
@@ -22,27 +29,45 @@ func BearerIntrospection() gin.HandlerFunc {
 		bearer := strings.TrimPrefix(authorization, "Bearer ")
 		if bearer == authorization {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"message": "Authorization failure, require Bearer scheme",
-				"code":    "UNAUTH",
+				"Status": gin.H{
+					"Message":       "Authorization failed",
+					"MessageDetail": "Require Bearer Token",
+					"Code":          "BADREQ",
+				},
+				"Response": nil,
 			})
 			c.Abort()
 			return
 		}
-	}
-	rbac, err := grbac.New(grbac.WithLoader(LoadAuthorizationRules, time.Minute))
-	if err != nil {
-		panic(err)
-	}
-	return func(c *gin.Context) {
-		roles, err := QueryRolesByHeaders(c.Request.Header)
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
+
+		var secret []byte
+		token, _ := jwt.Parse(bearer, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			}
+
+			return secret, nil
+		})
+
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			var user models.User
+			if claims["iss"] != nil {
+				if err := datasource.GetConnection().Where(&models.User{ID: user.ID}).First(&user).Error; err != nil {
+					c.Set("user", user)
+					c.Set("bearer", bearer)
+					return
+				}
+			}
 		}
-		state, _ := rbac.IsRequestGranted(c.Request, roles)
-		if !state.IsGranted() {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
+
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"Status": gin.H{
+				"Message":       "Authorization failed",
+				"MessageDetail": "Invaild Token",
+				"Code":          "BADREQ",
+			},
+			"Response": nil,
+		})
+		c.Abort()
 	}
 }

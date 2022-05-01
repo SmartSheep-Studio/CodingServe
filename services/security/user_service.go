@@ -1,12 +1,14 @@
 package security
 
 import (
+	"codingserve/configs"
 	"codingserve/datasource"
 	"codingserve/models"
 	"codingserve/services"
 	"strings"
 
 	"github.com/casbin/casbin/v2"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -31,7 +33,7 @@ func NewUserService() *UserService {
 	return service
 }
 
-func (self *UserService) CreateUser(user models.User, force bool) bool {
+func (self *UserService) CreateUser(user *models.User, force bool) bool {
 	userUuid := uuid.New()
 	userPassword, _ := self.passwordService.GenerateHash(user.Password)
 	codeContent := uuid.New()
@@ -82,32 +84,37 @@ func (self *UserService) ActiveUser(code string) bool {
 	}
 }
 
-func (self *UserService) AddUserIntoGroup(user models.User, group models.Group) bool {
+func (self *UserService) SignUserJWT(user *models.User) (string, error) {
+	claims := &jwt.StandardClaims{
+		ExpiresAt: 43200,
+		Issuer:    user.ID,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signed, err := token.SignedString([]byte(configs.SysConfig.Secret))
+
+	return signed, err
+}
+
+func (self *UserService) VerifyUserInformation(username, email, password string) *models.User {
+	var user *models.User
+	if err := self.connection.Where(&models.User{Username: username}).First(&user).Error; err != nil {
+		if err := self.connection.Where(&models.User{Email: email}).First(&user).Error; err != nil {
+			return nil
+		}
+	}
+	if !self.passwordService.CompareHash(password, user.Password) {
+		return nil
+	} else {
+		return user
+	}
+}
+
+func (self *UserService) AddUserIntoGroup(user *models.User, group *models.Group) bool {
 	if user.GroupID != "" {
 		return false
 	}
 
 	user.GroupID = group.ID
-	self.enforcer.AddPermissionsForUser(user.ID, strings.Split(group.Permissions, ","))
 	return self.connection.Save(&user).Error == nil
-}
-
-func (self *UserService) RemoveUserFromGroup(user models.User, group models.Group) bool {
-	if user.GroupID == "" {
-		return false
-	}
-
-	user.GroupID = ""
-	for _, object := range strings.Split(group.Permissions, ",") {
-		self.enforcer.DeletePermissionForUser(user.ID, object)
-	}
-	return self.connection.Save(&user).Error == nil
-}
-
-func (self *UserService) AddUserPermission(user models.User, permission string) {
-	self.enforcer.AddPermissionForUser(user.ID, permission)
-}
-
-func (self *UserService) RemoveUserPermission(user models.User, permission string) {
-	self.enforcer.DeletePermissionForUser(user.ID, permission)
 }
