@@ -149,3 +149,14 @@ func (self *UserController) LoginUser(c *gin.Context) {
 		})
 	}
 }
+
+func (self *UserController) GetUserProfile(c *gin.Context) {
+	profile, _ := c.Get("user")
+	c.JSON(http.StatusOK, gin.H{
+		"Status": gin.H{
+			"Message": "Get profile successfully",
+			"Code":    "SUCCESS",
+		},
+		"Response": profile,
+	})
+}

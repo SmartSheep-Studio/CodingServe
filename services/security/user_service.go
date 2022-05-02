@@ -6,6 +6,7 @@ import (
 	"codingserve/models"
 	"codingserve/services"
 	"strings"
+	"time"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/golang-jwt/jwt/v4"
@@ -85,9 +86,14 @@ func (self *UserService) ActiveUser(code string) bool {
 }
 
 func (self *UserService) SignUserJWT(user *models.User) (string, error) {
-	claims := &jwt.StandardClaims{
-		ExpiresAt: 43200,
+	claims := &jwt.RegisteredClaims{
 		Issuer:    user.ID,
+		Subject:   "Login",
+		Audience:  []string{"CodingLand"},
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(2 * 24 * time.Hour)),
+		NotBefore: jwt.NewNumericDate(time.Now()),
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+		ID:        uuid.New().String(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

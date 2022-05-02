@@ -5,6 +5,8 @@ import (
 
 	rootControllers "codingserve/controllers"
 	securityControllers "codingserve/controllers/security"
+
+	securityMiddlewares "codingserve/middleware/security"
 )
 
 func Init(app *gin.Engine) {
@@ -22,6 +24,9 @@ func Init(app *gin.Engine) {
 			securityHandlers.POST("/users", controller.SignUpNewUser)
 			securityHandlers.POST("/users/login", controller.LoginUser)
 			securityHandlers.POST("/users/active", controller.ActiveNewUser)
+
+			securityHandlers.Use(securityMiddlewares.UserVerifyHandler())
+			securityHandlers.GET("/users/profile", controller.GetUserProfile)
 		}
 	}
 

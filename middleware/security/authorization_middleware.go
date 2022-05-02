@@ -1,9 +1,9 @@
 package security
 
 import (
+	"codingserve/configs"
 	"codingserve/datasource"
 	"codingserve/models"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -40,34 +40,51 @@ func UserVerifyHandler() gin.HandlerFunc {
 			return
 		}
 
-		var secret []byte
-		token, _ := jwt.Parse(bearer, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-			}
-
-			return secret, nil
+		token, err := jwt.ParseWithClaims(bearer, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(configs.SysConfig.Secret), nil
 		})
 
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			var user models.User
-			if claims["iss"] != nil {
-				if err := datasource.GetConnection().Where(&models.User{ID: user.ID}).First(&user).Error; err != nil {
-					c.Set("user", user)
-					c.Set("bearer", bearer)
-					return
-				}
-			}
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"Status": gin.H{
+					"Message":       "Authorization failed",
+					"MessageDetail": err,
+					"Code":          "FAILED",
+				},
+				"Response": nil,
+			})
+			c.Abort()
+			return
 		}
 
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Status": gin.H{
-				"Message":       "Authorization failed",
-				"MessageDetail": "Invaild Token",
-				"Code":          "BADREQ",
-			},
-			"Response": nil,
-		})
-		c.Abort()
+		if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok && token.Valid {
+			var user models.User
+			if claims.Audience[0] == "CodingLand" && claims.Issuer != "" {
+				if err := datasource.GetConnection().Where(&models.User{ID: claims.Issuer}).First(&user).Error; err == nil {
+					c.Set("user", user)
+					c.Set("bearer", bearer)
+				} else {
+					c.JSON(http.StatusInternalServerError, gin.H{
+						"Status": gin.H{
+							"Message":       "Authorization failed",
+							"MessageDetail": "Failed to get your profile and verify your data",
+							"Code":          "SQLERR",
+						},
+						"Response": nil,
+					})
+					c.Abort()
+				}
+			}
+		} else {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"Status": gin.H{
+					"Message":       "Authorization failed",
+					"MessageDetail": "Decode or validate failed",
+					"Code":          "BADREQ",
+				},
+				"Response": nil,
+			})
+			c.Abort()
+		}
 	}
 }
