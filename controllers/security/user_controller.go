@@ -119,11 +119,12 @@ func (self *UserController) LoginUser(c *gin.Context) {
 		return
 	}
 
-	user := self.userService.VerifyUserInformation(request.Username, request.Password)
+	user, reason := self.userService.GetUserInformation(request.Username, request.Password)
 	if user == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Status": gin.H{
 				"Message": "Provide data maybe is wrong.",
+				"MessageDetail": reason,
 				"Code":    "REQBAD",
 			},
 			"Response": nil,

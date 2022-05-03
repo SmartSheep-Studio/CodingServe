@@ -20,12 +20,14 @@ func Init(app *gin.Engine) {
 
 		securityHandlers := apiHandlers.Group("/security")
 		{
-			controller := securityControllers.NewUserController()
-			securityHandlers.POST("/users", controller.SignUpNewUser)
-			securityHandlers.POST("/users/login", controller.LoginUser)
-			securityHandlers.POST("/users/active", controller.ActiveNewUser)
+			userController := securityControllers.NewUserController()
+			securityHandlers.POST("/users/signup", userController.SignUpNewUser)
+			securityHandlers.POST("/users/login", userController.LoginUser)
+			securityHandlers.POST("/users/active", userController.ActiveNewUser)
+			securityHandlers.Group("/users/profile", securityMiddlewares.UserVerifyHandler(), securityMiddlewares.PermissionCheckMiddleware([]string{"read:profile"})).GET("", userController.GetUserProfile)
 
-			securityHandlers.Group("/users/profile", securityMiddlewares.UserVerifyHandler(), securityMiddlewares.PermissionCheckMiddleware([]string{"read:profile"})).GET("", controller.GetUserProfile)
+			lockerController := securityControllers.NewLockerController()
+			securityHandlers.Group("/locks/user", securityMiddlewares.UserVerifyHandler(), securityMiddlewares.PermissionCheckMiddleware([]string{"write:locks"})).POST("", lockerController.LockUser)
 		}
 	}
 

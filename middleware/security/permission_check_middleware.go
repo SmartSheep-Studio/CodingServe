@@ -28,7 +28,12 @@ func PermissionCheckMiddleware(permissions []string) gin.HandlerFunc {
 
 		var userGroup models.Group
 		var userGroupPermissions []string
-		userGroupOk := datasource.GetConnection().Where(&models.Group{ID: user.GroupID}).First(&userGroup).Error == nil
+		var userGroupOk bool
+		if err := datasource.GetConnection().Where(&models.Group{ID: user.GroupID}).First(&userGroup).Error; err == nil {
+			userGroupOk = true
+		} else {
+			userGroupOk = false
+		}
 		if userGroupOk {
 			err := json.Unmarshal(userGroup.Permissions, &userGroupPermissions)
 			if err != nil {

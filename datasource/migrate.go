@@ -7,7 +7,7 @@ func Migrate() error {
 		&models.User{},
 		&models.Group{},
 		&models.VerifyCode{},
-		&models.ProhibitedInformation{},
+		&models.ResourcesLock{},
 		&models.Permission{},
 
 		&models.OauthToken{},

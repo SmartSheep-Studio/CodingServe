@@ -118,17 +118,20 @@ func (self *UserService) SignUserJWT(user *models.User) (string, error) {
 	return signed, err
 }
 
-func (self *UserService) VerifyUserInformation(username, password string) *models.User {
+func (self *UserService) GetUserInformation(username, password string) (*models.User, string) {
 	var user *models.User
 	if err := self.connection.Where(&models.User{Username: username}).First(&user).Error; err != nil {
 		if err := self.connection.Where(&models.User{Email: username}).First(&user).Error; err != nil {
-			return nil
+			return nil, "NotFound"
 		}
 	}
 	if !self.passwordService.CompareHash(password, user.Password) {
-		return nil
+		return nil, "AuthorizationFailure"
 	} else {
-		return user
+		if user.IsLocked {
+			return nil, "AccountLocked"
+		}
+		return user, ""
 	}
 }
 
