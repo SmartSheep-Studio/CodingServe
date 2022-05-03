@@ -5,6 +5,7 @@ import (
 	"codingserve/datasource"
 	"codingserve/models"
 	"codingserve/services"
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -36,8 +37,26 @@ func (self *UserService) CreateUser(user *models.User, force bool) bool {
 	userPassword, _ := self.passwordService.GenerateHash(user.Password)
 	codeContent := uuid.New()
 
+	permissions := datatypes.JSON([]byte(`[]`))
+	var defaultPermissions []models.Permission
+	var defaultOnlyPermissions []string
+	if err := self.connection.Select("permission").Where(&models.Permission{IsDefault: true}).Find(&defaultPermissions).Error; err != nil {
+		return false
+	} else {
+		for _, permission := range defaultPermissions {
+			defaultOnlyPermissions = append(defaultOnlyPermissions, permission.Permission)
+		}
+	}
+	if len(defaultPermissions) != 0 {
+		permissionsJSON, err := json.Marshal(defaultOnlyPermissions)
+		if err != nil {
+			return false
+		}
+		permissions = datatypes.JSON([]byte(permissionsJSON))
+	}
+
 	if !force {
-		model := models.User{ID: userUuid.String(), Username: user.Username, Password: userPassword, Email: user.Email, Attributes: datatypes.JSON([]byte(`{}`)), Permissions: datatypes.JSON([]byte(`{}`))}
+		model := models.User{ID: userUuid.String(), Username: user.Username, Password: userPassword, Email: user.Email, Attributes: datatypes.JSON([]byte(`{}`)), Permissions: permissions}
 		verify := models.VerifyCode{UID: userUuid.String(), Code: strings.ToUpper(codeContent.String()[:6]), Type: "active"}
 		err := self.connection.Create(&model).Error
 		if err != nil {
@@ -48,7 +67,7 @@ func (self *UserService) CreateUser(user *models.User, force bool) bool {
 			}
 		}
 	} else {
-		model := models.User{ID: userUuid.String(), Username: user.Username, Password: userPassword, Email: user.Email, Attributes: datatypes.JSON([]byte(`{}`)), Permissions: datatypes.JSON([]byte(`{}`)), IsActive: true}
+		model := models.User{ID: userUuid.String(), Username: user.Username, Password: userPassword, Email: user.Email, Attributes: datatypes.JSON([]byte(`{}`)), Permissions: permissions, IsActive: true}
 		err := self.connection.Create(&model).Error
 		return err != nil
 	}
@@ -99,10 +118,10 @@ func (self *UserService) SignUserJWT(user *models.User) (string, error) {
 	return signed, err
 }
 
-func (self *UserService) VerifyUserInformation(username, email, password string) *models.User {
+func (self *UserService) VerifyUserInformation(username, password string) *models.User {
 	var user *models.User
 	if err := self.connection.Where(&models.User{Username: username}).First(&user).Error; err != nil {
-		if err := self.connection.Where(&models.User{Email: email}).First(&user).Error; err != nil {
+		if err := self.connection.Where(&models.User{Email: username}).First(&user).Error; err != nil {
 			return nil
 		}
 	}

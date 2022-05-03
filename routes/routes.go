@@ -25,8 +25,7 @@ func Init(app *gin.Engine) {
 			securityHandlers.POST("/users/login", controller.LoginUser)
 			securityHandlers.POST("/users/active", controller.ActiveNewUser)
 
-			securityHandlers.Use(securityMiddlewares.UserVerifyHandler())
-			securityHandlers.GET("/users/profile", controller.GetUserProfile)
+			securityHandlers.Group("/users/profile", securityMiddlewares.UserVerifyHandler(), securityMiddlewares.PermissionCheckMiddleware([]string{"read:profile"})).GET("", controller.GetUserProfile)
 		}
 	}
 

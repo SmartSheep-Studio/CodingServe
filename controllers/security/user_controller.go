@@ -32,7 +32,6 @@ type ActiveUserRequest struct {
 type LoginUserRequest struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
-	Email    string `json:"email"`
 }
 
 // Handlers
@@ -42,6 +41,7 @@ func (self *UserController) SignUpNewUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Status": gin.H{
 				"Message": "Provide data scheme is wrong.",
+				"MessageDetail": err,
 				"Code":    "REQBAD",
 			},
 			"Response": nil,
@@ -76,6 +76,7 @@ func (self *UserController) ActiveNewUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Status": gin.H{
 				"Message": "Provide data scheme is wrong.",
+				"MessageDetail": err,
 				"Code":    "REQBAD",
 			},
 			"Response": nil,
@@ -110,6 +111,7 @@ func (self *UserController) LoginUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Status": gin.H{
 				"Message": "Provide data scheme is wrong.",
+				"MessageDetail": err,
 				"Code":    "REQBAD",
 			},
 			"Response": nil,
@@ -117,7 +119,7 @@ func (self *UserController) LoginUser(c *gin.Context) {
 		return
 	}
 
-	user := self.userService.VerifyUserInformation(request.Username, request.Email, request.Password)
+	user := self.userService.VerifyUserInformation(request.Username, request.Password)
 	if user == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Status": gin.H{
