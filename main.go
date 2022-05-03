@@ -27,7 +27,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	datasource.InitAdapter()
 
 	err = app.Run(":" + configs.SysConfig.Port)
 	if err != nil {

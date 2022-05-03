@@ -11,6 +11,7 @@ type User struct {
 	Password        string         `gorm:"type:varchar(64);not null" binding:"required"`
 	Email           string         `gorm:"uniqueIndex;type:varchar(128);not null" binding:"required"`
 	Attributes      datatypes.JSON `gorm:"not null"`
+	Permissions     datatypes.JSON `gorm:"not null"`
 	Description     string         `gorm:"type:varchar(512)"`
 	Birthday        time.Time      `gorm:"autoCreateTime"`
 	Level           int64          `gorm:"default:1"`

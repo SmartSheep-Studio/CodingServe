@@ -64,11 +64,11 @@ func UserVerifyHandler() gin.HandlerFunc {
 					c.Set("user", user)
 					c.Set("bearer", bearer)
 				} else {
-					c.JSON(http.StatusInternalServerError, gin.H{
+					c.JSON(http.StatusUnauthorized, gin.H{
 						"Status": gin.H{
 							"Message":       "Authorization failed",
-							"MessageDetail": "Failed to get your profile and verify your data",
-							"Code":          "SQLERR",
+							"MessageDetail": "Failed to get your profile and verify your data, check your access token",
+							"Code":          "BADREQ",
 						},
 						"Response": nil,
 					})

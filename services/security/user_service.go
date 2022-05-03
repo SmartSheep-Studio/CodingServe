@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/casbin/casbin/v2"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
@@ -17,7 +16,6 @@ import (
 
 type UserService struct {
 	connection *gorm.DB
-	enforcer   *casbin.Enforcer
 
 	verifyCodeService *VerifyCodeService
 	passwordService   *services.PasswordService
@@ -26,7 +24,6 @@ type UserService struct {
 func NewUserService() *UserService {
 	service := &UserService{
 		connection: datasource.GetConnection(),
-		enforcer:   datasource.GetEnforcer(),
 
 		verifyCodeService: NewVerifyCodeService(),
 		passwordService:   &services.PasswordService{},
@@ -40,7 +37,7 @@ func (self *UserService) CreateUser(user *models.User, force bool) bool {
 	codeContent := uuid.New()
 
 	if !force {
-		model := models.User{ID: userUuid.String(), Username: user.Username, Password: userPassword, Email: user.Email, Attributes: datatypes.JSON([]byte(`{}`))}
+		model := models.User{ID: userUuid.String(), Username: user.Username, Password: userPassword, Email: user.Email, Attributes: datatypes.JSON([]byte(`{}`)), Permissions: datatypes.JSON([]byte(`{}`))}
 		verify := models.VerifyCode{UID: userUuid.String(), Code: strings.ToUpper(codeContent.String()[:6]), Type: "active"}
 		err := self.connection.Create(&model).Error
 		if err != nil {
@@ -51,7 +48,7 @@ func (self *UserService) CreateUser(user *models.User, force bool) bool {
 			}
 		}
 	} else {
-		model := models.User{ID: userUuid.String(), Username: user.Username, Password: userPassword, Email: user.Email, Attributes: datatypes.JSON([]byte(`{}`)), IsActive: true}
+		model := models.User{ID: userUuid.String(), Username: user.Username, Password: userPassword, Email: user.Email, Attributes: datatypes.JSON([]byte(`{}`)), Permissions: datatypes.JSON([]byte(`{}`)), IsActive: true}
 		err := self.connection.Create(&model).Error
 		return err != nil
 	}
@@ -72,7 +69,7 @@ func (self *UserService) ActiveUser(code string) bool {
 		}
 	}
 
-	if !self.verifyCodeService.IsVerifyCodeAvailable(verifyCode) {
+	if verifyCode.Type == "active" && !self.verifyCodeService.IsVerifyCodeAvailable(verifyCode) {
 		return false
 	}
 

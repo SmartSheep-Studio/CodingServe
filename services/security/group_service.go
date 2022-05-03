@@ -4,19 +4,16 @@ import (
 	"codingserve/datasource"
 	"codingserve/models"
 
-	"github.com/casbin/casbin/v2"
 	"gorm.io/gorm"
 )
 
 type GroupService struct {
 	connection *gorm.DB
-	enforcer   *casbin.Enforcer
 }
 
 func NewGroupService() *GroupService {
 	service := &GroupService{
 		connection: datasource.GetConnection(),
-		enforcer:   datasource.GetEnforcer(),
 	}
 	return service
 }
