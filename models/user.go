@@ -20,6 +20,7 @@ type User struct {
 	BankID          string         `gorm:"type:varchar(36)"`
 	IsActive        bool           `gorm:"not null;default:false"`
 	IsLocked        bool           `gorm:"not null;default:false"`
+	LockedID        string         `gorm:""`
 	UpdatedAt       time.Time      `gorm:"autoUpdateTime:milli"`
 	CreatedAt       time.Time      `gorm:"autoCreateTime"`
 }

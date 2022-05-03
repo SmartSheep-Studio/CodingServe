@@ -1,6 +1,7 @@
 package security
 
 import (
+	"codingserve/datasource"
 	"codingserve/models"
 	"encoding/json"
 	"net/http"
@@ -25,19 +26,38 @@ func PermissionCheckMiddleware(permissions []string) gin.HandlerFunc {
 			return
 		}
 
-		var userPermissions []string
-		err := json.Unmarshal(user.Permissions, &userPermissions)
-		if err != nil {
+		var userGroup models.Group
+		var userGroupPermissions []string
+		userGroupOk := datasource.GetConnection().Where(&models.Group{ID: user.GroupID}).First(&userGroup).Error == nil
+		if userGroupOk {
+			err := json.Unmarshal(userGroup.Permissions, &userGroupPermissions)
+			if err != nil {
 				c.JSON(http.StatusForbidden, gin.H{
 					"Status": gin.H{
-						"Message": "Failed to verify user permission",
+						"Message":       "Failed to verify user permission",
 						"MessageDetail": "Failed to parse your permissions",
-						"Code":    "DATAERR",
+						"Code":          "DATAERR",
 					},
 					"Response": nil,
 				})
 				c.Abort()
 				return
+			}
+		}
+
+		var userPermissions []string
+		err := json.Unmarshal(user.Permissions, &userPermissions)
+		if err != nil {
+			c.JSON(http.StatusForbidden, gin.H{
+				"Status": gin.H{
+					"Message":       "Failed to verify user permission",
+					"MessageDetail": "Failed to parse your permissions",
+					"Code":          "DATAERR",
+				},
+				"Response": nil,
+			})
+			c.Abort()
+			return
 		}
 
 		for _, permission := range permissions {
@@ -48,12 +68,21 @@ func PermissionCheckMiddleware(permissions []string) gin.HandlerFunc {
 					break
 				}
 			}
+			if !pass && userGroupOk {
+				for _, checkPermission := range userGroupPermissions {
+					if permission == checkPermission {
+						pass = true
+						break
+					}
+				}
+			}
 			if pass {
 				continue
 			} else {
 				c.JSON(http.StatusForbidden, gin.H{
 					"Status": gin.H{
-						"Message": "Failed to verify user permission",
+						"Message": "You are not authorized to access here",
+						"MessageDetail": "Require permission \"" + permission + "\"",
 						"Code":    "BADPERMS",
 					},
 					"Response": nil,
