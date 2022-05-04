@@ -29,6 +29,9 @@ func Init(app *gin.Engine) {
 			lockerController := securityControllers.NewLockerController()
 			securityHandlers.Group("/locks/report/user", securityMiddlewares.UserVerifyHandler()).POST("", lockerController.ReportUser)
 			securityHandlers.Group("/locks/user", securityMiddlewares.UserVerifyHandler(), securityMiddlewares.PermissionCheckMiddleware([]string{"write:locks"})).POST("", lockerController.LockUser)
+
+			groupController := securityControllers.NewGroupController()
+			securityHandlers.Group("/groups", securityMiddlewares.UserVerifyHandler(), securityMiddlewares.PermissionCheckMiddleware([]string{"write:groups"})).POST("", groupController.GreateGroup)
 		}
 	}
 

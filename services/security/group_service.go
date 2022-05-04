@@ -4,7 +4,7 @@ import (
 	"codingserve/datasource"
 	"codingserve/models"
 
-	"gorm.io/datatypes"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -19,10 +19,10 @@ func NewGroupService() *GroupService {
 	return service
 }
 
-func (self *GroupService) CreateGroup(group models.Group, force bool) bool {
+func (self *GroupService) CreateGroup(group models.Group) bool {
 	// Override provide details
-	if !force {
-		group.Permissions = datatypes.JSON([]byte(`[]`))
+	if group.ID == "" {
+		group.ID = uuid.New().String()
 	}
 	if err := self.connection.Create(&group).Error; err != nil {
 		return false
