@@ -32,6 +32,7 @@ func Init(app *gin.Engine) {
 
 			groupController := securityControllers.NewGroupController()
 			securityHandlers.Group("/groups", securityMiddlewares.UserVerifyHandler(), securityMiddlewares.PermissionCheckMiddleware([]string{"write:groups"})).POST("", groupController.GreateGroup)
+			securityHandlers.Group("/groups", securityMiddlewares.UserVerifyHandler(), securityMiddlewares.PermissionCheckMiddleware([]string{"write:groups"})).PUT("", groupController.JoinGroup)
 		}
 	}
 

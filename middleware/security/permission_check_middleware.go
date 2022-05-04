@@ -68,6 +68,10 @@ func PermissionCheckMiddleware(permissions []string) gin.HandlerFunc {
 		for _, permission := range permissions {
 			pass := false
 			for _, checkPermission := range userPermissions {
+				// "*" is all permission
+				if checkPermission == "*" {
+					return
+				}
 				if permission == checkPermission {
 					pass = true
 					break
@@ -75,6 +79,10 @@ func PermissionCheckMiddleware(permissions []string) gin.HandlerFunc {
 			}
 			if !pass && userGroupOk {
 				for _, checkPermission := range userGroupPermissions {
+					// "*" is all permission
+					if checkPermission == "*" {
+						return
+					}
 					if permission == checkPermission {
 						pass = true
 						break
@@ -86,9 +94,9 @@ func PermissionCheckMiddleware(permissions []string) gin.HandlerFunc {
 			} else {
 				c.JSON(http.StatusForbidden, gin.H{
 					"Status": gin.H{
-						"Message": "You are not authorized to access here",
+						"Message":       "You are not authorized to access here",
 						"MessageDetail": "Require permission \"" + permission + "\"",
-						"Code":    "BADPERMS",
+						"Code":          "BADPERMS",
 					},
 					"Response": nil,
 				})

@@ -71,7 +71,7 @@ func (self *LockerController) ReportUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Status": gin.H{
 				"Message":       "Provide data is wrong.",
-				"MessageDetail": "Cannot report user because: " + err,
+				"MessageDetail": err,
 				"Code":          "REQBAD",
 			},
 			"Response": nil,
