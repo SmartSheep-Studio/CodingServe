@@ -19,8 +19,8 @@ func NewLockerService() *LockerService {
 	return service
 }
 
-func (self *LockerService) LockResource(reason string, instant bool) (*models.ResourcesLock, string) {
-	information := &models.ResourcesLock{ID: uuid.New().String(), Description: reason, Status: "processing"}
+func (self *LockerService) LockResource(issuer, reason string, instant bool) (*models.ResourcesLock, string) {
+	information := &models.ResourcesLock{ID: uuid.New().String(), IssuerID: issuer, Description: reason, Status: "processing"}
 	if instant {
 		information.Status = "locked"
 	}
@@ -41,12 +41,15 @@ func (self *LockerService) UpdateLockInformation(lock models.ResourcesLock, stat
 	}
 }
 
-func (self *LockerService) LockUserResource(user *models.User, reason string, instant bool) (bool, string) {
+func (self *LockerService) LockUserResource(user *models.User, issuer models.User, reason string, instant bool) (bool, string) {
 	var lock models.ResourcesLock
 	if user.IsLocked {
 		return false, "AlreadyLocked"
 	}
 	if err := self.connection.Where(&models.ResourcesLock{ID: user.LockedID}).First(&lock).Error; err == nil {
+		if lock.Status != "processing" {
+			return true, "AlreadyLocked"
+		}
 		if instant {
 			ok := self.UpdateLockInformation(lock, "locked")
 			if !ok {
@@ -62,7 +65,7 @@ func (self *LockerService) LockUserResource(user *models.User, reason string, in
 		}
 	}
 
-	information, err := self.LockResource(reason, instant)
+	information, err := self.LockResource(issuer.ID, reason, instant)
 	if err != "" {
 		return false, err
 	} else {
