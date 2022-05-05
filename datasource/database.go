@@ -2,10 +2,13 @@ package datasource
 
 import (
 	"codingserve/configs"
+	"log"
+	"os"
 	"strings"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var connection *gorm.DB
@@ -30,7 +33,11 @@ func init() {
 
 	var err error
 
-	connection, err = gorm.Open(mysql.Open(uri), &gorm.Config{})
+	connection, err = gorm.Open(mysql.Open(uri), &gorm.Config{
+		Logger: logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags), logger.Config{
+			IgnoreRecordNotFoundError: true,
+		}),
+	})
 	if err != nil {
 		panic(err)
 	}

@@ -30,3 +30,12 @@ func (self *GroupService) CreateGroup(group models.Group) bool {
 		return err == nil
 	}
 }
+
+func (self *GroupService) JoinGroup(user models.User, group models.Group) (bool, string) {
+	user.GroupID = group.ID
+	if err := self.connection.Save(&user).Error; err != nil {
+		return false, "FailedUpdateProfile"
+	} else {
+		return true, ""
+	}
+}

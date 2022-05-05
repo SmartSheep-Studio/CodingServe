@@ -109,46 +109,28 @@ func (self *GroupController) JoinGroup(c *gin.Context) {
 			})
 			return
 		}
-		user.GroupID = group.ID
-		if err := self.connection.Save(&user).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"Status": gin.H{
-					"Message":       "Join group failed.",
-					"MessageDetail": "Failed to update your profile.",
-					"Code":          "SQLERR",
-				},
-				"Response": nil,
-			})
-		} else {
-			c.JSON(http.StatusOK, gin.H{
-				"Status": gin.H{
-					"Message": "Join group successfully.",
-					"Code":    "SUCCESS",
-				},
-				"Response": nil,
-			})
-		}
 	} else {
 		profile, _ := c.Get("user")
-		user := profile.(models.User)
-		user.GroupID = group.ID
-		if err := self.connection.Save(&user).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"Status": gin.H{
-					"Message":       "Join group failed.",
-					"MessageDetail": "Failed to update your profile.",
-					"Code":          "SQLERR",
-				},
-				"Response": nil,
-			})
-		} else {
-			c.JSON(http.StatusOK, gin.H{
-				"Status": gin.H{
-					"Message": "Join group successfully.",
-					"Code":    "SUCCESS",
-				},
-				"Response": nil,
-			})
-		}
+		user = profile.(models.User)
+	}
+
+	status, err := self.groupService.JoinGroup(user, group)
+	if !status {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Status": gin.H{
+				"Message":       "Join group failed.",
+				"MessageDetail": err,
+				"Code":          "FAILED",
+			},
+			"Response": nil,
+		})
+	} else {
+		c.JSON(http.StatusOK, gin.H{
+			"Status": gin.H{
+				"Message": "Join group successfully.",
+				"Code":    "SUCCESS",
+			},
+			"Response": nil,
+		})
 	}
 }
