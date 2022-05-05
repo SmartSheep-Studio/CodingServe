@@ -5,6 +5,7 @@ import (
 
 	rootControllers "codingserve/controllers"
 	securityControllers "codingserve/controllers/security"
+	developerControllers "codingserve/controllers/developer"
 
 	securityMiddlewares "codingserve/middleware/security"
 )
@@ -33,6 +34,12 @@ func Init(app *gin.Engine) {
 			groupController := securityControllers.NewGroupController()
 			securityHandlers.Group("/groups", securityMiddlewares.UserVerifyHandler(), securityMiddlewares.PermissionCheckMiddleware([]string{"write:groups"})).POST("", groupController.GreateGroup)
 			securityHandlers.Group("/groups", securityMiddlewares.UserVerifyHandler(), securityMiddlewares.PermissionCheckMiddleware([]string{"write:groups"})).PUT("", groupController.JoinGroup)
+		}
+
+		developerHandlers := apiHandlers.Group("/developers")
+		{
+			developerController := developerControllers.NewDeveloperController()
+			developerHandlers.Group("/join", securityMiddlewares.UserVerifyHandler()).PUT("", developerController.JoinDeveloper)
 		}
 	}
 
