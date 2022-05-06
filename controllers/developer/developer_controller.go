@@ -24,11 +24,20 @@ func NewDeveloperController() *DeveloperController {
 	return controller
 }
 
+// Types
+type JoinDeveloperRequest struct {
+	Force bool `json:"force"`
+}
+
+// Handlers
 func (self *DeveloperController) JoinDeveloper(c *gin.Context) {
+	var request JoinDeveloperRequest
+	_ = c.BindJSON(&request)
+
 	profile, _ := c.Get("user")
 	user := profile.(models.User)
 
-	status, err := self.developerService.JoinDeveloper(user)
+	status, err := self.developerService.JoinDeveloper(user, request.Force)
 	if !status {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Status": gin.H{
@@ -41,8 +50,8 @@ func (self *DeveloperController) JoinDeveloper(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, gin.H{
 			"Status": gin.H{
-				"Message":       "Join developer successfully",
-				"Code":          "SUCCESS",
+				"Message": "Join developer successfully",
+				"Code":    "SUCCESS",
 			},
 			"Response": nil,
 		})

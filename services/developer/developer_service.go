@@ -22,10 +22,14 @@ func NewDeveloperService() *DeveloperService {
 	return service
 }
 
-func (self *DeveloperService) JoinDeveloper(user models.User) (bool, string) {
+func (self *DeveloperService) JoinDeveloper(user models.User, force bool) (bool, string) {
 	var developerGroup models.Group
 	if err := self.connection.Where(&models.Group{ID: "developer"}).First(&developerGroup).Error; err != nil {
 		return false, "DeveloperGroupNotFound"
+	}
+
+	if user.GroupID != "" && !force {
+		return false, "NeedForceUpdate"
 	}
 
 	return self.groupService.JoinGroup(user, developerGroup)
