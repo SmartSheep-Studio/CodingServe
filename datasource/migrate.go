@@ -20,6 +20,7 @@ func Migrate() error {
 
 		&models.BankAccount{},
 		&models.BankCurrency{},
+		&models.BankMaterial{},
 		&models.BankTransfer{},
 	)
 	if err == nil {
@@ -55,6 +56,36 @@ func MigrateData() {
 	}
 	for _, group := range groups {
 		if err := GetConnection().Create(&group).Error; err != nil {
+			continue
+		}
+	}
+
+	// Init bank currencies
+	currencies := []*models.BankCurrency{
+		{ID: "CCO", Name: "Code Coin", Description: "Official Currency", DeveloperID: "official", Icon: "$"},
+	}
+	for _, currency := range currencies {
+		if err := GetConnection().Create(&currency).Error; err != nil {
+			continue
+		}
+	}
+
+	// Init bank materials
+	materials := []*models.BankMaterial{
+		{ID: "communication-controller", Description: "Create in-site chat discuss platform resource", Icon: "[^-V]"},
+	}
+	for _, material := range materials {
+		if err := GetConnection().Create(&material).Error; err != nil {
+			continue
+		}
+	}
+
+	// Init bank accounts
+	banks := []*models.BankAccount{
+		{ID: "official-codingland", Name: "CodingLand Official Account", Description: "CodingLand official account"},
+	}
+	for _, bank := range banks {
+		if err := GetConnection().Create(&bank).Error; err != nil {
 			continue
 		}
 	}
