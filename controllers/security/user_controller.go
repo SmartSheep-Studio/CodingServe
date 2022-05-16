@@ -105,7 +105,7 @@ func (self *UserController) ActiveNewUser(c *gin.Context) {
 	}
 }
 
-func (self *UserController) LoginUser(c *gin.Context) {
+func (self *UserController) SignInUser(c *gin.Context) {
 	var request LoginUserRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{

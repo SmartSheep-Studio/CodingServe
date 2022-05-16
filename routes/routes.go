@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	rootControllers "codingserve/controllers"
-	securityControllers "codingserve/controllers/security"
 	developerControllers "codingserve/controllers/developer"
+	securityControllers "codingserve/controllers/security"
 
 	securityMiddlewares "codingserve/middleware/security"
 )
@@ -23,7 +23,7 @@ func Init(app *gin.Engine) {
 		{
 			userController := securityControllers.NewUserController()
 			securityHandlers.POST("/users/signup", userController.SignUpNewUser)
-			securityHandlers.POST("/users/login", userController.LoginUser)
+			securityHandlers.POST("/users/signin", userController.SignInUser)
 			securityHandlers.POST("/users/active", userController.ActiveNewUser)
 			securityHandlers.Group("/users/profile", securityMiddlewares.UserVerifyHandler()).GET("", userController.GetUserProfile)
 
