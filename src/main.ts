@@ -1,28 +1,26 @@
-import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { AppModule } from './app.module';
+import { NestFactory } from "@nestjs/core";
+import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { AppModule } from "./app.module";
 
-import * as packageInfo from '../package.json';
+import packages from "../package.json";
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
 
   const config = new DocumentBuilder()
-    .setTitle('SharkServer')
-    .setDescription('LumbaShark 核心服务器')
-    .setVersion(packageInfo.version)
+    .setTitle("CodingLand")
+    .setDescription("CodingLand Official Server")
+    .setVersion(packages.version)
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('documentation', app, document);
+  SwaggerModule.setup("documentation", app, document);
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix("api");
 
   await app.listen(3100);
   console.log(`Application is running on: ${await app.getUrl()}`);
-  console.log(
-    `Application Documentation is running on: ${await app.getUrl()}/documentation`,
-  );
+  console.log(`Application Documentation is running on: ${await app.getUrl()}/documentation`);
 }
 
 bootstrap();

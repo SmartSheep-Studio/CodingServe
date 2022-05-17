@@ -1,23 +1,28 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
-import * as packageInfo from '../../package.json';
+import * as packages from '../../package.json';
 
 @Controller('/')
-@ApiTags('状态')
+@ApiTags('States')
 export class StateController {
   @Get()
   getState(): object {
     return {
-      message: 'Welcome access LumbaShark API!',
-      data: {
-        state: 'ok',
-        server: {
-          version: packageInfo.version,
-          description: packageInfo.description,
-          author: packageInfo.author,
-          license: packageInfo.license,
-        },
+      Status: {
+        Code: 'OK',
+        Message: 'Successfully fetch server information and modules statues',
+      },
+      Response: {
+        Message: process.env.SERVER_MAINTENANCE
+          ? 'All service and module are working perfectly!'
+          : process.env.SERVER_MAINTENANCE_DESCRIPTION,
+        Services:
+          process.env.SERVER_MAINTENANCE &&
+          process.env.SERVER_MAINTENANCE_DISABLE
+            ? 'DOWN'
+            : 'UP',
+        Version: packages.version,
       },
     };
   }

@@ -4,12 +4,12 @@ import { UsersService } from './users.service';
 import { JwtService } from '@nestjs/jwt';
 import {
   users as UserModel,
-  authorization_clients as ClientModel,
+  developer_clients as ClientModel,
 } from '@prisma/client';
 
 @Injectable()
 export class AuthorizationService {
-  public static secret = 'FUMBNyKCKoWP2aKFZy6rPRRDuWt20Y70';
+  public static secret = process.env.APPLICATION_SECRET;
 
   constructor(
     private usersService: UsersService,
@@ -41,7 +41,7 @@ export class AuthorizationService {
     const payload = {
       type: 'oauth',
       user: { username: user.username, uid: user.id },
-      client: { id: client.client_id, name: client.client_name },
+      client: { id: client.client_id, name: client.name },
     };
     return {
       token: this.jwtService.sign(payload),
