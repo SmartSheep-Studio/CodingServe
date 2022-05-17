@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
-import { StateController } from './state/state.controller';
-import { AuthorizationModule } from './authorization/authorization.module';
+import { StateController } from './controllers/state.controller';
+import { AuthorizationModule } from './modules/authorization.module';
 import { UsersModule } from './users/users.module';
-import { PrismaModule } from './prisma/prisma.module';
-import { DeveloperModule } from './developers/developers.module';
+import { PrismaModule } from './modules/prisma.module';
+import { DeveloperModule } from './modules/developers.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { BankModule } from './banks/banks.module';
+import { BankModule } from './modules/banks.module';
 
 @Module({
   imports: [

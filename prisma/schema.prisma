@@ -9,72 +9,86 @@ datasource db {
 
 model users {
   id               String   @id @db.VarChar(36)
+  // Informations
   username         String   @unique @db.VarChar(80)
   password         String   @db.Text
   email            String   @unique @db.VarChar(512)
-  profile          Json
+  attributes       Json
+  permissions      Json
+  description      String   @db.VarChar(512)
+  birthday         DateTime @default(now()) @db.DateTime(0)
+  // Level
   level            Int      @default(1)
   level_experience Int      @default(0)
-  group_id         Int
-  bank_id          String
+  // IDs
+  group_id         String   @db.VarChar(36)
+  backpack_id      String   @db.VarChar(36)
+  lock_id          String   @db.VarChar(36)
+  // Statues
   is_active        Boolean  @default(false)
   is_locked        Boolean  @default(false)
+  // DateTimes
   created_at       DateTime @default(now()) @db.DateTime(0)
-  update_at        DateTime @default(now()) @db.DateTime(0)
+  updated_at       DateTime @default(now()) @db.DateTime(0)
 }
 
-model verify_codes {
+model user_groups {
+  id          String   @id @db.VarChar(36)
+  // Informations
+  name        String   @unique @db.VarChar(512)
+  description String   @db.VarChar(512)
+  permissions Json
+  // Statues
+  is_active   Boolean  @default(true)
+  // DateTimes
+  created_at  DateTime @default(now()) @db.DateTime(0)
+  updated_at  DateTime @default(now()) @db.DateTime(0)
+}
+
+model user_tokens {
   id         String   @id @db.VarChar(36)
   uid        String   @db.VarChar(36)
-  code       String   @unique @db.VarChar(6)
-  type       String   @default("activation_code") @db.VarChar(20)
+  // Informations
+  token      String   @unique @db.VarChar(6)
+  // Available types "active", "safety", "refresh"
+  type       String   @default("active") @db.VarChar(12)
+  // DateTimes
   created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @db.DateTime(0)
 }
 
-model groups {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique @db.VarChar(512)
-  permissions Json
-  created_at  DateTime @default(now()) @db.DateTime(0)
-  update_at   DateTime @default(now()) @db.DateTime(0)
-}
-
-model authorization_clients {
-  id            String   @id
-  client_name   String   @db.VarChar(80)
+model developer_clients {
+  id            String   @id @db.VarChar(36)
+  developer_id  String   @db.VarChar(36)
+  // Informations
+  name          String   @db.VarChar(128)
   client_id     String   @unique @db.VarChar(36)
   client_secret String   @db.Text
-  scope         String   @default("all")
-  developer_id  String
-  avatar        String   @default("https://th.bing.com/th/id/OIP.FZcmYQE0Ghe7D5_gM69olQHaH9?pid=ImgDet&rs=1")
+  scopes        Json
+  icon          String   @default("https://th.bing.com/th/id/OIP.FZcmYQE0Ghe7D5_gM69olQHaH9?pid=ImgDet&rs=1")
+  // DateTimes
   created_at    DateTime @default(now()) @db.DateTime(0)
   updated_at    DateTime @default(now()) @db.DateTime(0)
 }
 
-model authorization_refresh_codes {
-  id         String   @id
-  code       String   @unique @db.VarChar(512)
-  uid        String   @db.VarChar(36)
-  client_id  String   @db.VarChar(36)
+model backpacks {
+  id         String   @id @db.VarChar(36)
+  // Informations
+  materials  Json
+  // DateTimes
   created_at DateTime @default(now()) @db.DateTime(0)
   updated_at DateTime @default(now()) @db.DateTime(0)
 }
 
-model authorization_codes {
-  id         String   @id
-  code       String   @unique @db.VarChar(512)
-  uid        String   @db.VarChar(36)
-  client_id  String   @db.VarChar(36)
-  created_at DateTime @default(now()) @db.DateTime(0)
-  updated_at DateTime @default(now()) @db.DateTime(0)
-}
-
-model bank_currency {
-  id           String   @id
-  code         String   @unique
-  description  String   @default("Lazy developer, didn't write any things")
-  developer_id String
-  avatar       String   @default("https://th.bing.com/th/id/OIP.FZcmYQE0Ghe7D5_gM69olQHaH9?pid=ImgDet&rs=1")
-  created_at   DateTime @default(now()) @db.DateTime(0)
-  updated_at   DateTime @default(now()) @db.DateTime(0)
+model locks {
+  id             String   @id @db.VarChar(36)
+  issuer_id      String   @db.VarChar(36)
+  // Informations
+  // Available status "process", "disapprove", "approval"
+  status         String   @default("processing") @db.VarChar(12)
+  description    String   @db.VarChar(512)
+  approval_count Int      @default(1)
+  // DateTimes
+  created_at     DateTime @default(now()) @db.DateTime(0)
+  updated_at     DateTime @default(now()) @db.DateTime(0)
 }
