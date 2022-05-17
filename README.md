@@ -1,6 +1,6 @@
-# 我们正在使用 Go 重构整个项目 —— CodingLand(LumbaShark v2)
+# CodingLand
 
-# LumbaShark
+**Notice: This README.md and the official documentation isn't updated yet!**
 
 LumbaShark is a very sharp Authorization management system, compatible with OAuth2 Authorization Code mode
 
