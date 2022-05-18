@@ -1,13 +1,13 @@
 import { Body, Controller, Get, HttpCode, Post, Put, Delete, Query, Request, Res, UseGuards } from "@nestjs/common";
-import { JwtAuthGuard } from "../guards/jwt.guard";
-import { PermissionsGuard } from "../decorators/permissions.guard";
-import { Permissions } from "../decorators/permissions.decorator";
+import { JwtAuthGuard } from "../../guards/jwt.guardard";
+import { PermissionsGuard } from "../../decorators/permissions.guardard";
+import { Permissions } from "../../decorators/permissions.decoratortor";
 import { developer_clients as ClientModel } from "@prisma/client";
-import { PrismaService } from "../services/prisma.service";
-import { DeveloperService } from "../services/developers.service";
-import ScopeInformation from "../enums/scope.enum";
-import { Scopes } from "../decorators/scope.decorator";
-import { ScopeGuard } from "../decorators/scope.guard";
+import { PrismaService } from "../../services/prisma.serviceice";
+import { DeveloperService } from "../../services/developers.serviceice";
+import ScopeInformation from "../../enums/scope.enumnum";
+import { Scopes } from "../../decorators/scope.decoratortor";
+import { ScopeGuard } from "../../decorators/scope.guardard";
 
 @Controller("/management/developer")
 export class DeveloperController {
@@ -121,7 +121,7 @@ export class DeveloperController {
     });
 
     // Delete client
-    await this.prisma.authorization_clients.delete({
+    await this.prisma.developer_clients.delete({
       where: { client_id: data["id"] },
     });
     return response.send({
@@ -136,7 +136,7 @@ export class DeveloperController {
   @Permissions("oauth-client management")
   @Scopes("write:developer")
   async register_client(@Body() client: ClientModel, @Request() request, @Res() response: any) {
-    if (client.scope == null) {
+    if (client.scopes == null) {
       return response.status(400).send({
         statusCode: 400,
         message: "Scope is invalid",
@@ -144,21 +144,9 @@ export class DeveloperController {
       });
     }
 
-    // Unique scopes
-    client.scope = Array.from(new Set(client.scope.split(","))).join(",");
-
-    if (client.scope.split(",").length > 1) {
-      for (const scope of client.scope.split(",")) {
-        if (!ScopeInformation.scopes.includes(scope)) {
-          return response.status(400).send({
-            statusCode: 400,
-            message: "Scope is invalid",
-            error: "DataError",
-          });
-        }
-      }
-    } else {
-      if (!ScopeInformation.scopes.includes(client.scope)) {
+    const scopes = client.scopes as Array<string>;
+    for (const scope of scopes) {
+      if (!ScopeInformation.scopes.includes(scope)) {
         return response.status(400).send({
           statusCode: 400,
           message: "Scope is invalid",

@@ -1,22 +1,11 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  Patch,
-  Put,
-  Res,
-  Request,
-  UseGuards,
-} from '@nestjs/common';
-import { PrismaService } from '../services/prisma.service';
-import { JwtAuthGuard } from '../guards/jwt.guard';
-import { PermissionsGuard } from '../authorization/guards/permissions.guard';
-import { Permissions } from '../decorators/permissions.decorator';
-import { groups as GroupModel } from '@prisma/client';
+import { Body, Controller, Delete, Get, HttpCode, Patch, Put, Res, Request, UseGuards } from "@nestjs/common";
+import { PrismaService } from "../services/prisma.service";
+import { JwtAuthGuard } from "../guards/jwt.guard";
+import { PermissionsGuard } from "../decorators/permissions.guard";
+import { Permissions } from "../decorators/permissions.decorator";
+import { user_groups as GroupModel } from "@prisma/client";
 
-@Controller('/management/groups')
+@Controller("/management/groups")
 export class GroupsController {
   constructor(private prisma: PrismaService) {}
 
@@ -26,16 +15,16 @@ export class GroupsController {
     if (request.user.group_id == 0) {
       return {
         statusCode: 200,
-        message: 'Successful selected',
+        message: "Successful selected",
         data: null,
       };
     }
-    const data = await this.prisma.groups.findUnique({
+    const data = await this.prisma.user_groups.findUnique({
       where: { id: request.user.group_id },
     });
     return {
       statusCode: 200,
-      message: 'Successful selected',
+      message: "Successful selected",
       data: data,
     };
   }
@@ -43,12 +32,12 @@ export class GroupsController {
   @Get()
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   async get_group(@Body() body: object) {
-    const data = await this.prisma.groups.findUnique({
-      where: { id: body['id'] },
+    const data = await this.prisma.user_groups.findUnique({
+      where: { id: body["id"] },
     });
     return {
       statusCode: 200,
-      message: 'Successful selected',
+      message: "Successful selected",
       data: data,
     };
   }
@@ -56,56 +45,52 @@ export class GroupsController {
   @Put()
   @HttpCode(201)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @Permissions('group create')
+  @Permissions("group create")
   async create_group(@Body() group: GroupModel, @Res() response) {
-    if (
-      (await this.prisma.groups.findUnique({ where: { name: group.name } })) !=
-      null
-    ) {
+    if ((await this.prisma.user_groups.findUnique({ where: { name: group.name } })) != null) {
       return response.status(400).send({
         statusCode: 400,
-        message: 'Group name is duplicated.',
-        error: 'DataError',
+        message: "Group name is duplicated.",
+        error: "DataError",
       });
     }
 
-    const data = await this.prisma.groups.create({ data: group });
+    const data = await this.prisma.user_groups.create({ data: group });
     return response.send({
       statusCode: 201,
-      message: 'Successful created',
+      message: "Successful created",
       data: data,
     });
   }
 
   @Patch()
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @Permissions('group update')
+  @Permissions("group update")
   async update_group(@Body() group: GroupModel, @Res() response) {
-    group.update_at = new Date();
-    const data = await this.prisma.groups.update({
+    const data = await this.prisma.user_groups.update({
       where: { id: group.id },
       data: group,
     });
-    delete data['password'];
+    delete data["password"];
     return response.send({
       statusCode: 200,
-      message: 'Successful updated',
+      message: "Successful updated",
       data: data,
     });
   }
 
   @Delete()
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @Permissions('group delete')
-  async delete_group(id: number) {
+  @Permissions("group delete")
+  async delete_group(id: string) {
     await this.prisma.users.updateMany({
       where: { group_id: id },
-      data: { group_id: 0 },
+      data: { group_id: "" },
     });
-    await this.prisma.groups.delete({ where: { id: id } });
+    await this.prisma.user_groups.delete({ where: { id: id } });
     return {
       statusCode: 200,
-      message: 'Successful deleted',
+      message: "Successful deleted",
     };
   }
 }

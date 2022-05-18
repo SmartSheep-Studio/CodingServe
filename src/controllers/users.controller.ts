@@ -89,7 +89,7 @@ export class UsersController {
       const verifyCode = await this.prisma.user_tokens.create({
         data: {
           id: uuidv4(),
-          uid: data.id,
+          issuer_id: data.id,
           token: uuidv4().toUpperCase().slice(0, 6),
         },
       });

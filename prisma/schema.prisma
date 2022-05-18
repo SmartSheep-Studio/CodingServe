@@ -47,11 +47,10 @@ model user_groups {
 
 model user_tokens {
   id         String   @id @db.VarChar(36)
-  uid        String   @db.VarChar(36)
+  issuer_id  String   @unique @db.VarChar(36)
   // Informations
   token      String   @unique @db.VarChar(6)
-  issuer_id  String   @unique @db.VarChar(36)
-  // Available types "active", "safety", "refresh"
+  // Available types "active", "safety", "refresh", "access"
   type       String   @default("active") @db.VarChar(12)
   // DateTimes
   created_at DateTime @default(now()) @db.DateTime(0)

@@ -1,17 +1,17 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { PERMISSIONS_KEY } from './permissions.decorator';
-import { PrismaService } from '../../services/prisma.service';
+import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { PERMISSIONS_KEY } from "./permissions.decorator";
+import { PrismaService } from "../services/prisma.service";
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
   constructor(private reflector: Reflector, private prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
-      PERMISSIONS_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const requiredPermissions = this.reflector.getAllAndOverride<string[]>(PERMISSIONS_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
     if (!requiredPermissions) {
       return true;
     }
@@ -19,7 +19,7 @@ export class PermissionsGuard implements CanActivate {
     if (user.group_id === 0) {
       return false;
     }
-    const group = await this.prisma.groups.findUnique({
+    const group = await this.prisma.user_groups.findUnique({
       where: { id: user.group_id },
     });
     if (group == null) {
@@ -30,13 +30,9 @@ export class PermissionsGuard implements CanActivate {
     }
     const permissions = group.permissions;
     if (!Array.isArray(permissions)) {
-      console.error(
-        `Failed to query user group permission: User group(${group.id}) permission isn't array.`,
-      );
+      console.error(`Failed to query user group permission: User group(${group.id}) permission isn't array.`);
       return false;
     }
-    return requiredPermissions.some((permission) =>
-      permissions?.includes(permission),
-    );
+    return requiredPermissions.some((permission) => permissions?.includes(permission));
   }
 }

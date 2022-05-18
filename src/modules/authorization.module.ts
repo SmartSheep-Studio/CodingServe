@@ -7,7 +7,7 @@ import { UsersModule } from './users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from '../guards/jwt.strategy';
 import { GroupsModule } from './groups.module';
-import { OauthModule } from './oauth.module';
+import { OauthModule } from './developers/oauth.module';
 
 @Module({
   imports: [
