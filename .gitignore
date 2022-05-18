@@ -1,5 +1,6 @@
 # compiled output
 /ui
+/ui/*
 /dist
 /node_modules
 
