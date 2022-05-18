@@ -1,12 +1,11 @@
 import { NestFactory } from "@nestjs/core";
-import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 
-import packages from "../package.json";
+import * as packages from "../package.json";
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
+  const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
     .setTitle("CodingLand")
@@ -19,8 +18,8 @@ async function bootstrap() {
   app.setGlobalPrefix("api");
 
   await app.listen(3100);
-  console.log(`Application is running on: ${await app.getUrl()}`);
-  console.log(`Application Documentation is running on: ${await app.getUrl()}/documentation`);
+  console.log(`[DEBUG] Application is running on: ${await app.getUrl()}`);
+  console.log(`[DEBUG] Application Documentation is running on: ${await app.getUrl()}/documentation`);
 }
 
 bootstrap();

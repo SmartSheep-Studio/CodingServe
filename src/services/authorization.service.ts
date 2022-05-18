@@ -1,25 +1,16 @@
-import * as bcrypt from 'bcrypt';
-import { Injectable } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { JwtService } from '@nestjs/jwt';
-import {
-  users as UserModel,
-  developer_clients as ClientModel,
-} from '@prisma/client';
+import * as bcrypt from "bcrypt";
+import { Injectable } from "@nestjs/common";
+import { UsersService } from "./users.service";
+import { JwtService } from "@nestjs/jwt";
+import { users as UserModel, developer_clients as ClientModel } from "@prisma/client";
 
 @Injectable()
 export class AuthorizationService {
   public static secret = process.env.APPLICATION_SECRET;
 
-  constructor(
-    private usersService: UsersService,
-    private jwtService: JwtService,
-  ) {}
+  constructor(private usersService: UsersService, private jwtService: JwtService) {}
 
-  async validateUser(
-    username: string,
-    password: string,
-  ): Promise<UserModel | null> {
+  async validateUser(username: string, password: string): Promise<UserModel | null> {
     const user = await this.usersService.getUserByUsername(username);
     if (user && (await bcrypt.compare(password, user.password))) {
       return user;
@@ -29,7 +20,7 @@ export class AuthorizationService {
 
   async signJWT(user: UserModel) {
     const payload = {
-      type: 'signin',
+      type: "signin",
       user: { username: user.username, uid: user.id },
     };
     return {
@@ -39,7 +30,7 @@ export class AuthorizationService {
 
   async signClientJWT(client: ClientModel, user: UserModel) {
     const payload = {
-      type: 'oauth',
+      type: "oauth",
       user: { username: user.username, uid: user.id },
       client: { id: client.client_id, name: client.name },
     };
