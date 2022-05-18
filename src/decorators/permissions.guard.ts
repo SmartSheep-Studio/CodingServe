@@ -16,23 +16,20 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
     const { user } = context.switchToHttp().getRequest();
-    if (user.group_id === 0) {
-      return false;
-    }
+    // Fetch user group information
     const group = await this.prisma.user_groups.findUnique({
       where: { id: user.group_id },
     });
     if (group == null) {
-      console.error(
-        `Failed to query user group permission: User group(${user.group_id}(invalid)), couldn't find in database.`,
-      );
       return false;
     }
-    const permissions = group.permissions;
-    if (!Array.isArray(permissions)) {
-      console.error(`Failed to query user group permission: User group(${group.id}) permission isn't array.`);
-      return false;
-    }
-    return requiredPermissions.some((permission) => permissions?.includes(permission));
+    // Authentication
+    const permissions = Object.assign(user.permissions, group.permissions);
+    return requiredPermissions.some((permission) => {
+      if (permissions.includes("*")) {
+        return true;
+      }
+      return permissions?.includes(permission);
+    });
   }
 }

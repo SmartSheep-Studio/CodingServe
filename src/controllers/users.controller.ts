@@ -55,7 +55,7 @@ export class UsersController {
       if (willRemove != null && willRemove.is_active == false) {
         await this.prisma.users.delete({ where: { id: willRemove.id } });
         await this.prisma.user_tokens.deleteMany({
-          where: { uid: willRemove.id, type: "active" },
+          where: { issuer_id: willRemove.id, type: "active" },
         });
       }
       if (
@@ -85,7 +85,7 @@ export class UsersController {
         }
       }
       const data = await this.userService.createUser(user);
-      await this.prisma.user_tokens.deleteMany({ where: { uid: data.id } });
+      await this.prisma.user_tokens.deleteMany({ where: { issuer_id: data.id } });
       const verifyCode = await this.prisma.user_tokens.create({
         data: {
           id: uuidv4(),

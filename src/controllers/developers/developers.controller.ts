@@ -1,13 +1,13 @@
 import { Body, Controller, Get, HttpCode, Post, Put, Delete, Query, Request, Res, UseGuards } from "@nestjs/common";
-import { JwtAuthGuard } from "../../guards/jwt.guardard";
-import { PermissionsGuard } from "../../decorators/permissions.guardard";
-import { Permissions } from "../../decorators/permissions.decoratortor";
+import { JwtAuthGuard } from "../../guards/jwt.guard";
+import { PermissionsGuard } from "../../decorators/permissions.guard";
+import { Permissions } from "../../decorators/permissions.decorator";
 import { developer_clients as ClientModel } from "@prisma/client";
-import { PrismaService } from "../../services/prisma.serviceice";
-import { DeveloperService } from "../../services/developers.serviceice";
-import ScopeInformation from "../../enums/scope.enumnum";
-import { Scopes } from "../../decorators/scope.decoratortor";
-import { ScopeGuard } from "../../decorators/scope.guardard";
+import { PrismaService } from "../../services/prisma.service";
+import { DeveloperService } from "../../services/developers.service";
+import ScopeInformation from "../../enums/scope.enum";
+import { Scopes } from "../../decorators/scope.decorator";
+import { ScopeGuard } from "../../decorators/scope.guard";
 
 @Controller("/management/developer")
 export class DeveloperController {
@@ -170,10 +170,7 @@ export class DeveloperController {
   async get_scope_information() {
     return {
       statusCode: 200,
-      data: {
-        details: ScopeInformation.details,
-        available: ScopeInformation.scopes,
-      },
+      data: ScopeInformation.scopes,
     };
   }
 }
