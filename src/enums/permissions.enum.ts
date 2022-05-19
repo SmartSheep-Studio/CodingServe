@@ -1,3 +1,3 @@
 export default {
-  permissions: ["all:developer"],
+  permissions: ["all:developer", "users:create"],
 };

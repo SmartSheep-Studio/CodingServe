@@ -1,6 +1,5 @@
 import { Module } from "@nestjs/common";
 import { StateController } from "./controllers/state.controller";
-import { AuthorizationModule } from "./modules/authorization.module";
 import { UsersModule } from "./modules/users.module";
 import { PrismaModule } from "./modules/prisma.module";
 import { DeveloperModule } from "./modules/developers/developers.module";
@@ -27,7 +26,6 @@ import { join } from "path";
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, "..", "ui"),
     }),
-    AuthorizationModule,
     UsersModule,
     PrismaModule,
     DeveloperModule,

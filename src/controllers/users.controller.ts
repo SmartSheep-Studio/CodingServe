@@ -1,4 +1,17 @@
-import { Body, Controller, Delete, Post, HttpCode, Patch, Put, Res, UseGuards, Request, Query } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Post,
+  HttpCode,
+  Patch,
+  Put,
+  Res,
+  UseGuards,
+  Request,
+  Query,
+  Get,
+} from "@nestjs/common";
 import { MailerService } from "@nestjs-modules/mailer";
 import { JwtAuthGuard } from "../guards/jwt.guard";
 import { PermissionsGuard } from "../decorators/permissions.guard";
@@ -7,136 +20,155 @@ import { users as UserModel } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import { PrismaService } from "../services/prisma.service";
 import { UsersService } from "../services/users.service";
+import { LocalAuthGuard } from "../guards/local.guard";
 
 @Controller("/security/users")
 export class UsersController {
   constructor(private prisma: PrismaService, private mailerService: MailerService, private userService: UsersService) {}
 
-  /**
-   * Different by "User create" function, this function is use to signup,
-   * it require a email, username, and password, then will send a code to verify your email.
-   * Next time request just need give verify code to register.
-   */
   @Post("/signup")
   @HttpCode(201)
-  async signup(@Body() user: UserModel, @Query() verify: object, @Res() response) {
-    if (verify["verify"]) {
-      const code = verify["verify"];
+  async signup(@Body() user: UserModel, @Query() query: object, @Res() response: any) {
+    if (query["active"]) {
+      const code = query["verify"];
       try {
         if (await this.userService.activeUser(code)) {
           return response.status(200).send({
-            statusCode: 200,
-            message: "Verify successful",
+            Status: {
+              Code: "OK",
+              Message: "Sucessfully active your account.",
+            },
+            Response: null,
           });
         } else {
           return response.status(400).send({
-            statusCode: 400,
-            message: "Verify code is invalid",
-            error: "DataError",
+            Status: {
+              Code: "DATA_ERROR",
+              Message: "Your active code is invalid.",
+            },
+            Response: null,
           });
         }
       } catch (e) {
         return response.status(400).send({
-          statusCode: 400,
-          message: "Failed to verify, database error, message: " + e.message,
-          error: "ServerError",
+          Status: {
+            Code: "UNKNOWN_ERROR_SERVERSIDE",
+            Message: "Cannot active your account. It's server-side question.",
+          },
+          Response: null,
         });
       }
     }
 
     try {
+      // Initialize the UUID
       user.id = uuidv4();
-      let willRemove = await this.prisma.users.findUnique({
-        where: { username: user.username },
-      });
-      if (willRemove != null && willRemove.email !== user.email) {
-        willRemove = null;
-      }
-      if (willRemove != null && willRemove.is_active == false) {
-        await this.prisma.users.delete({ where: { id: willRemove.id } });
-        await this.prisma.user_tokens.deleteMany({
-          where: { issuer_id: willRemove.id, type: "active" },
-        });
-      }
-      if (
-        !willRemove &&
-        (await this.prisma.users.findUnique({
-          where: { username: user.username },
-        })) != null
-      ) {
+
+      // Check duplicate
+      let duplicate: any;
+      duplicate = await this.userService.getUserByUsername(user.username);
+      if (duplicate != null) {
         return response.status(400).send({
-          statusCode: 400,
-          message: "Username is duplicated",
-          error: "DataError#1",
+          Status: {
+            Code: "DATA_ERROR",
+            CodeDetail: "USERNAME_DUPLICATED",
+            Message: "Username is duplicated.",
+          },
+          Response: null,
         });
       }
-      if (!willRemove) {
-        const already = await this.prisma.users.findUnique({
-          where: { username: user.email },
+      duplicate = await this.userService.getUserByEmail(user.email);
+      if (duplicate != null) {
+        return response.status(400).send({
+          Status: {
+            Code: "DATA_ERROR",
+            CodeDetail: "ALREADY_REGISTED",
+            Message: "Your email has been used, check you maybe already registered.",
+          },
+          Response: duplicate,
         });
-        if (already != null) {
-          delete already["password"];
-          return response.status(400).send({
-            statusCode: 400,
-            message: "Email is used, maybe you already have an account",
-            error: "DataError#2",
-            data: already,
-          });
-        }
       }
+
+      // Insert to database
       const data = await this.userService.createUser(user);
+
+      // Create user activation token
       await this.prisma.user_tokens.deleteMany({ where: { issuer_id: data.id } });
-      const verifyCode = await this.prisma.user_tokens.create({
+      const activeToken = await this.prisma.user_tokens.create({
         data: {
           id: uuidv4(),
           issuer_id: data.id,
           token: uuidv4().toUpperCase().slice(0, 6),
         },
       });
-      delete data["password"];
+
+      // Send mail
       this.mailerService
         .sendMail({
           to: data.email,
-          subject: "Verify your SmartSheep universal account",
-          template: "verify",
+          subject: "CodingLand @" + data.username + " | Email Verify",
+          template: "activation",
           context: {
             user: data,
-            code: verifyCode.token,
+            code: activeToken.token,
           },
         })
         .then(() => {
           return response.send({
-            statusCode: 201,
-            message: "Successful sign up, verify email sent",
-            data: data,
+            Status: {
+              Code: "OK",
+              Message: "Successfully sign up new account, activation email has been send.",
+            },
+            Response: null,
           });
         })
         .catch((error) => {
           return response.status(500).send({
-            statusCode: 500,
-            message: "Failed to send email, message: " + error.message,
-            error: "ServerError#2",
+            Status: {
+              Code: "SMTP_ERROR",
+              Message: "Unable to establish connection with SMTP.",
+              ErrorDetail: error,
+            },
+            Response: null,
           });
         });
-    } catch (e) {
+    } catch (error) {
       return response.status(500).send({
-        statusCode: 500,
-        message: "Failed to sign up, database error, message: " + e.message,
-        error: "ServerError#1",
+        Status: {
+          Code: "DB_ERROR",
+          Message: "Unable to update data in databases.",
+          ErrorDetail: error,
+        },
+        Response: null,
       });
     }
+  }
+
+  @Post("/signin")
+  @UseGuards(LocalAuthGuard)
+  async getAccessToken(@Request() request: any) {
+    return this.userService.signJWT(request.user);
+  }
+
+  @Get("/profile")
+  @UseGuards(JwtAuthGuard)
+  async getUserProfile(@Request() request: any) {
+    return request.user;
   }
 
   @Put()
   @HttpCode(201)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @Permissions("user create")
-  async create_user(@Body() user: UserModel, @Res() response) {
+  @Permissions("users:create")
+  async create_user(@Body() user: UserModel, @Res() response: any) {
     if ((await this.userService.getUserByUsername(user.username)) != null) {
       return response.status(400).send({
-        statusCode: 400,
-        message: "Username is duplicated.",
-        error: "DataError",
+        Status: {
+          Code: "DATA_ERROR",
+          CodeDetail: "USERNAME_DUPLICATED",
+          Message: "Username is duplicated.",
+        },
+        Response: null,
       });
     }
     if (
@@ -146,24 +178,29 @@ export class UsersController {
       })) == null
     ) {
       return response.status(400).send({
-        statusCode: 400,
-        message: "Provided group_id is invalid.",
-        error: "DataError",
+        Status: {
+          Code: "DATA_ERROR",
+          CodeDetail: "USER_GROUP_NOT_FOUND",
+          Message: "Unable found user group with Group ID: " + user.group_id,
+        },
+        Response: null,
       });
     }
 
     const data = await this.userService.createUser(user);
     delete data["password"];
     return response.send({
-      statusCode: 201,
-      message: "Successful created",
-      data: data,
+      Status: {
+        Code: "OK",
+        Message: "Successfully sign up new account, activation email has been send.",
+      },
+      Response: null,
     });
   }
 
   @Patch()
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  async update_user(@Body() user: UserModel, @Request() request, @Res() response) {
+  async update_user(@Body() user: UserModel, @Request() request: any, @Res() response: any) {
     if (user.group_id != null) {
       if (
         user.group_id !== "" &&
@@ -172,9 +209,12 @@ export class UsersController {
         })) == null
       ) {
         return response.status(400).send({
-          statusCode: 400,
-          message: "Provided group_id is invalid.",
-          error: "DataError",
+          Status: {
+            Code: "DATA_ERROR",
+            CodeDetail: "USER_GROUP_NOT_FOUND",
+            Message: "Unable found user group with Group ID: " + user.group_id,
+          },
+          Response: null,
         });
       }
     }
@@ -185,9 +225,11 @@ export class UsersController {
     });
     delete data["password"];
     return response.send({
-      statusCode: 200,
-      message: "Successful updated",
-      data: data,
+      Status: {
+        Code: "OK",
+        Message: "Successfully updated.",
+      },
+      Response: data,
     });
   }
 
@@ -197,8 +239,11 @@ export class UsersController {
   async delete_user(id: string) {
     await this.prisma.users.delete({ where: { id: id } });
     return {
-      statusCode: 200,
-      message: "Successful deleted",
+      Status: {
+        Code: "OK",
+        Message: "Successfully deleted.",
+      },
+      Response: null,
     };
   }
 }

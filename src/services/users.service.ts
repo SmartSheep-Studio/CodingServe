@@ -1,27 +1,45 @@
 import { v4 as uuidv4 } from "uuid";
 import { Injectable } from "@nestjs/common";
-import { users as UserModel } from "@prisma/client";
+import { users as UserModel, developer_clients as ClientModel } from "@prisma/client";
 import { PrismaService } from "./prisma.service";
+import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  public static secret = process.env.APPLICATION_SECRET;
 
-  async getUserByUsername(username: string): Promise<any> {
-    return await this.prisma.users.findUnique({
-      where: { username: username },
-    });
+  constructor(private readonly jwtService: JwtService, private readonly prisma: PrismaService) {}
+
+  async getUserByUID(uid: string): Promise<any> {
+    return await this.prisma.users.findUnique({ where: { id: uid } });
   }
 
-  async getUserById(uid: string): Promise<any> {
-    return await this.prisma.users.findUnique({ where: { id: uid } });
+  async getUserByUsername(username: string): Promise<any> {
+    return await this.prisma.users.findUnique({ where: { username: username } });
+  }
+
+  async getUserByEmail(email: string): Promise<any> {
+    return await this.prisma.users.findUnique({ where: { email: email } });
+  }
+
+  async validateUser(username: string, password: string): Promise<UserModel | null> {
+    const user = await this.getUserByUsername(username);
+    if (user && (await bcrypt.compare(password, user.password))) {
+      return user;
+    }
+    return null;
   }
 
   async createUser(user: UserModel) {
     user.id = uuidv4();
     user.attributes = user.attributes ? user.attributes : {};
+    user.permissions = user.permissions ? user.permissions : [];
+    user.description = user.description ? user.description : "He didn't write any things...";
+    user.backpack_id = "";
+    user.group_id = "";
     user.group_id = user.group_id ? user.group_id : "";
+    user.lock_id = "";
     user.password = await bcrypt.hash(user.password, await bcrypt.genSalt());
     await this.prisma.users.create({ data: user });
     return user;
@@ -46,5 +64,26 @@ export class UsersService {
       await this.prisma.user_tokens.deleteMany({ where: { issuer_id: user.id } });
       return true;
     }
+  }
+
+  async signJWT(user: UserModel) {
+    const payload = {
+      type: "signin",
+      user: { username: user.username, uid: user.id },
+    };
+    return {
+      token: this.jwtService.sign(payload),
+    };
+  }
+
+  async signClientJWT(client: ClientModel, user: UserModel) {
+    const payload = {
+      type: "oauth",
+      user: { username: user.username, uid: user.id },
+      client: { id: client.client_id, name: client.name },
+    };
+    return {
+      token: this.jwtService.sign(payload),
+    };
   }
 }

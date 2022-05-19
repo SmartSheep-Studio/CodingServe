@@ -3,19 +3,19 @@ import { Body, Controller, Get, Post, Query, Res, UseGuards, Request } from "@ne
 import { PrismaService } from "../../services/prisma.service";
 import { v4 as uuidv4 } from "uuid";
 import { JwtService } from "@nestjs/jwt";
-import { AuthorizationService } from "../../services/authorization.service";
 import * as bcrpyt from "bcrypt";
+import { UsersService } from "src/services/users.service";
 
 @Controller("oauth")
 export class OauthController {
   constructor(
-    private prisma: PrismaService,
-    private jwtService: JwtService,
-    private authorizationService: AuthorizationService,
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,
   ) {}
 
   @Get()
-  async signin(@Query() query: object, @Res() response) {
+  async signin(@Query() query: object, @Res() response: any) {
     if (query["response_type"] !== "code") {
       return response.status(400).send({ error: "Unsupported response/grant type (AU#C400)" });
     }
@@ -152,7 +152,7 @@ export class OauthController {
         type: "refresh",
       },
     });
-    const accessToken = await this.authorizationService.signClientJWT(client, user);
+    const accessToken = await this.usersService.signClientJWT(client, user);
     return response.send({
       access_token: accessToken.token,
       refresh_token: refreshCode,
