@@ -15,9 +15,9 @@ export class StateController {
       },
       Response: {
         Message: process.env.SERVER_MAINTENANCE
-          ? "All service and module are working perfectly!"
-          : process.env.SERVER_MAINTENANCE_DESCRIPTION,
-        Services: process.env.SERVER_MAINTENANCE && process.env.SERVER_MAINTENANCE_DISABLE ? "DOWN" : "UP",
+          ? process.env.SERVER_MAINTENANCE_DESCRIPTION
+          : "All service and module are working perfectly!",
+        Services: process.env.SERVER_MAINTENANCE && process.env.SERVER_MAINTENANCE_DISABLE ? "UP" : "DOWN",
         Version: packages.version,
       },
     };

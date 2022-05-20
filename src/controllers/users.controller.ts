@@ -1,17 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Post,
-  HttpCode,
-  Patch,
-  Put,
-  Res,
-  UseGuards,
-  Request,
-  Query,
-  Get,
-} from "@nestjs/common";
+import { Body, Controller, Delete, Post, HttpCode, Patch, Put, Res, UseGuards, Request, Get } from "@nestjs/common";
 import { MailerService } from "@nestjs-modules/mailer";
 import { JwtAuthGuard } from "../guards/jwt.guard";
 import { PermissionsGuard } from "../decorators/permissions.guard";
@@ -27,39 +14,8 @@ export class UsersController {
   constructor(private prisma: PrismaService, private mailerService: MailerService, private userService: UsersService) {}
 
   @Post("/signup")
-  @HttpCode(201)
-  async signup(@Body() user: UserModel, @Query() query: object, @Res() response: any) {
-    if (query["active"]) {
-      const code = query["verify"];
-      try {
-        if (await this.userService.activeUser(code)) {
-          return response.status(200).send({
-            Status: {
-              Code: "OK",
-              Message: "Sucessfully active your account.",
-            },
-            Response: null,
-          });
-        } else {
-          return response.status(400).send({
-            Status: {
-              Code: "DATA_ERROR",
-              Message: "Your active code is invalid.",
-            },
-            Response: null,
-          });
-        }
-      } catch (e) {
-        return response.status(400).send({
-          Status: {
-            Code: "UNKNOWN_ERROR_SERVERSIDE",
-            Message: "Cannot active your account. It's server-side question.",
-          },
-          Response: null,
-        });
-      }
-    }
-
+  @HttpCode(200)
+  async signup(@Body() user: UserModel, @Res() response: any) {
     try {
       // Initialize the UUID
       user.id = uuidv4();
@@ -89,18 +45,20 @@ export class UsersController {
         });
       }
 
-      // Insert to database
-      const data = await this.userService.createUser(user);
-
       // Create user activation token
-      await this.prisma.user_tokens.deleteMany({ where: { issuer_id: data.id } });
-      const activeToken = await this.prisma.user_tokens.create({
-        data: {
-          id: uuidv4(),
-          issuer_id: data.id,
-          token: uuidv4().toUpperCase().slice(0, 6),
-        },
-      });
+      await this.prisma.user_tokens.deleteMany({ where: { issuer_id: user.id } });
+
+      // Insert to database
+      const [activeToken, data] = await this.prisma.$transaction([
+        this.prisma.user_tokens.create({
+          data: {
+            id: uuidv4(),
+            issuer_id: user.id,
+            token: uuidv4().toUpperCase().slice(0, 6),
+          },
+        }),
+        this.userService.createUserSynchronous(user),
+      ]);
 
       // Send mail
       this.mailerService
@@ -123,9 +81,10 @@ export class UsersController {
           });
         })
         .catch((error) => {
-          return response.status(500).send({
+          return response.status(200).send({
             Status: {
-              Code: "SMTP_ERROR",
+              Code: "TRY_AGAIN_LATER",
+              CodeDetail: "SMTP_ERROR",
               Message: "Unable to establish connection with SMTP.",
               ErrorDetail: error,
             },
@@ -144,10 +103,52 @@ export class UsersController {
     }
   }
 
+  @Post("/active")
+  @HttpCode(200)
+  async activeUser(@Body() body: object, @Res() response: any) {
+    const code = body["code"];
+    try {
+      if (await this.userService.activeUser(code)) {
+        return response.status(200).send({
+          Status: {
+            Code: "OK",
+            Message: "Sucessfully active your account.",
+          },
+          Response: null,
+        });
+      } else {
+        return response.status(400).send({
+          Status: {
+            Code: "DATA_ERROR",
+            Message: "Your active code is invalid.",
+          },
+          Response: null,
+        });
+      }
+    } catch (error) {
+      return response.status(400).send({
+        Status: {
+          Code: "UNKNOWN_ERROR_SERVERSIDE",
+          Message: "Cannot active your account. It's server-side question.",
+          ErrorDetail: error,
+        },
+        Response: null,
+      });
+    }
+  }
+
   @Post("/signin")
+  @HttpCode(200)
   @UseGuards(LocalAuthGuard)
   async getAccessToken(@Request() request: any) {
-    return this.userService.signJWT(request.user);
+    const token = this.userService.signJWT(request.user);
+    return {
+      Status: {
+        Code: "OK",
+        Message: "Sign in successfully.",
+      },
+      Response: token,
+    };
   }
 
   @Get("/profile")

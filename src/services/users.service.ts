@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { Injectable } from "@nestjs/common";
-import { users as UserModel, developer_clients as ClientModel } from "@prisma/client";
+import { users as UserModel, developer_clients as ClientModel, PrismaPromise } from "@prisma/client";
 import { PrismaService } from "./prisma.service";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
@@ -32,7 +32,6 @@ export class UsersService {
   }
 
   async createUser(user: UserModel) {
-    user.id = uuidv4();
     user.attributes = user.attributes ? user.attributes : {};
     user.permissions = user.permissions ? user.permissions : [];
     user.description = user.description ? user.description : "He didn't write any things...";
@@ -43,6 +42,18 @@ export class UsersService {
     user.password = await bcrypt.hash(user.password, await bcrypt.genSalt());
     await this.prisma.users.create({ data: user });
     return user;
+  }
+
+  createUserSynchronous(user: UserModel): PrismaPromise<any> {
+    user.attributes = user.attributes ? user.attributes : {};
+    user.permissions = user.permissions ? user.permissions : [];
+    user.description = user.description ? user.description : "He didn't write any things...";
+    user.backpack_id = "";
+    user.group_id = "";
+    user.group_id = user.group_id ? user.group_id : "";
+    user.lock_id = "";
+    user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync());
+    return this.prisma.users.create({ data: user });
   }
 
   async activeUser(active_code: string) {
@@ -66,14 +77,12 @@ export class UsersService {
     }
   }
 
-  async signJWT(user: UserModel) {
+  signJWT(user: UserModel) {
     const payload = {
       type: "signin",
       user: { username: user.username, uid: user.id },
     };
-    return {
-      token: this.jwtService.sign(payload),
-    };
+    return this.jwtService.sign(payload);
   }
 
   async signClientJWT(client: ClientModel, user: UserModel) {
