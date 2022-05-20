@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Post, HttpCode, Patch, Put, Res, UseGuards, Request, Get } from "@nestjs/common";
+import { Body, Controller, Delete, Post, HttpCode, Patch, Put, Res, UseGuards, Request, Get, Query } from "@nestjs/common";
 import { MailerService } from "@nestjs-modules/mailer";
 import { JwtAuthGuard } from "../guards/jwt.guard";
 import { PermissionsGuard } from "../decorators/permissions.guard";
@@ -153,8 +153,31 @@ export class UsersController {
 
   @Get("/profile")
   @UseGuards(JwtAuthGuard)
-  async getUserProfile(@Request() request: any) {
-    return request.user;
+  async getUserProfile(@Request() request: any, @Query() options: object) {
+    if (options["detail"]) {
+      const user = await this.prisma.users.findUnique({ where: { id: request.user.id } });
+      const group = await this.prisma.user_groups.findUnique({ where: { id: request.user.group_id } });
+      const backpack = await this.prisma.backpacks.findUnique({ where: { id: request.user.backpack_id } });
+      return {
+        Status: {
+          Code: "OK",
+          Message: "Successfully fetch your detail profile",
+        },
+        Response: {
+          User: user,
+          Group: group,
+          Backpack: backpack,
+        },
+      };
+    } else {
+      return {
+        Status: {
+          Code: "OK",
+          Message: "Successfully fetch your profile",
+        },
+        Response: request.user,
+      };
+    }
   }
 
   @Put()
