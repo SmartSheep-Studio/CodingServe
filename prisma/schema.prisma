@@ -19,7 +19,7 @@ model users {
   birthday         DateTime @default(now()) @db.DateTime(0)
   // Level
   level            Int      @default(1)
-  level_experience Int      @default(0)
+  level_experience BigInt      @default(0)
   // IDs
   group_id         String   @db.VarChar(36)
   backpack_id      String   @db.VarChar(36)

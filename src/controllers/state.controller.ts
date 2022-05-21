@@ -18,7 +18,14 @@ export class StateController {
           ? process.env.SERVER_MAINTENANCE_DESCRIPTION
           : "All service and module are working perfectly!",
         Services: process.env.SERVER_MAINTENANCE && process.env.SERVER_MAINTENANCE_DISABLE ? "UP" : "DOWN",
+        NodeName: "Logic Mainland",
         Version: packages.version,
+        Details: {
+          Level: {
+            Difficulty: process.env.LEVEL_PERLEVEL_UPGRADE_DIFFICULTY,
+            Requirement: process.env.LEVEL_PERLEVEL_UPGRADE_REQUIRE,
+          },
+        },
       },
     };
   }

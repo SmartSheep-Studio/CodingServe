@@ -20,11 +20,8 @@ export class PermissionsGuard implements CanActivate {
     const group = await this.prisma.user_groups.findUnique({
       where: { id: user.group_id },
     });
-    if (group == null) {
-      return false;
-    }
     // Authentication
-    const permissions = Object.assign(user.permissions, group.permissions);
+    const permissions = Object.assign(user.permissions, group ? group.permissions : []);
     return requiredPermissions.some((permission) => {
       if (permissions.includes("*")) {
         return true;

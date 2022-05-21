@@ -11,6 +11,7 @@ import {
   Request,
   Get,
   Query,
+  Req,
 } from "@nestjs/common";
 import { MailerService } from "@nestjs-modules/mailer";
 import { JwtAuthGuard } from "../guards/jwt.guard";
@@ -22,7 +23,6 @@ import { PrismaService } from "../services/prisma.service";
 import { UsersService } from "../services/users.service";
 import { LocalAuthGuard } from "../guards/local.guard";
 import { BackpacksService } from "../services/backpacks.service";
-
 @Controller("/security/users")
 export class UsersController {
   constructor(
@@ -203,7 +203,7 @@ export class UsersController {
   @HttpCode(201)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions("users:create")
-  async create_user(@Body() user: UserModel, @Res() response: any) {
+  async createUser(@Body() user: UserModel, @Res() response: any) {
     if ((await this.usersService.getUserByUsername(user.username)) != null) {
       return response.status(400).send({
         Status: {
@@ -243,7 +243,7 @@ export class UsersController {
 
   @Patch()
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  async update_user(@Body() user: UserModel, @Request() request: any, @Res() response: any) {
+  async updateUser(@Body() user: UserModel, @Request() request: any, @Res() response: any) {
     if (user.group_id != null) {
       if (
         user.group_id !== "" &&
@@ -278,7 +278,7 @@ export class UsersController {
 
   @Delete()
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @Permissions("user delete")
+  @Permissions("users:delete")
   async delete_user(id: string) {
     await this.prisma.users.delete({ where: { id: id } });
     return {
@@ -287,6 +287,27 @@ export class UsersController {
         Message: "Successfully deleted.",
       },
       Response: null,
+    };
+  }
+
+  @Put("/experience")
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions("users:delete")
+  async addUserExperiences(@Req() request: any, @Body("amount") amount: number, @Body("id") id?: string) {
+    let user: UserModel;
+    user = await this.prisma.users.findUnique({ where: { id: id ? id : request.user.id } });
+    const isUpgraded = await this.usersService.addUserExperience(user, BigInt(amount));
+    user = await this.prisma.users.findUnique({ where: { id: request.user.id } });
+    return {
+      Status: {
+        Code: "OK",
+        Message: isUpgraded ? "Successfully added experience(s) and upgraded." : "Successfully added experience(s).",
+      },
+      Response: {
+        Level: user.level,
+        CurrentExperience: user.level_experience,
+        NextUpgradeRequirement: this.usersService.computeRequireExperience(user.level),
+      },
     };
   }
 }

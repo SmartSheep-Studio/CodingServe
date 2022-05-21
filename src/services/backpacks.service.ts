@@ -7,13 +7,13 @@ import { v4 as uuidv4 } from "uuid";
 export class BackpacksService {
   constructor(private readonly prisma: PrismaService) {}
 
-  public static presents = [{ id: "code-coin", amount: 1200 }];
+  public static presents = { "code-coin": { amount: 1200, attributes: {} } };
 
   async createBackpack(present = false, id = uuidv4()) {
     return await this.prisma.backpacks.create({
       data: {
         id: id,
-        materials: present ? BackpacksService.presents : [],
+        materials: present ? BackpacksService.presents : {},
       },
     });
   }
@@ -21,7 +21,7 @@ export class BackpacksService {
     return this.prisma.backpacks.create({
       data: {
         id: id,
-        materials: present ? BackpacksService.presents : [],
+        materials: present ? BackpacksService.presents : {},
       },
     });
   }

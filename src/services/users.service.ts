@@ -61,6 +61,47 @@ export class UsersService {
     return this.prisma.users.create({ data: user });
   }
 
+  computeRequireExperience(level) {
+    return BigInt(
+      Math.round(
+        level *
+          Number.parseInt(process.env.LEVEL_PERLEVEL_UPGRADE_REQUIRE) *
+          (level * Number.parseFloat(process.env.LEVEL_PERLEVEL_UPGRADE_DIFFICULTY)),
+      ),
+    );
+  }
+
+  async userUpgrade(user: UserModel, force = false) {
+    if (!force) {
+      let requirement: bigint;
+      requirement = this.computeRequireExperience(user.level);
+      if (user.level_experience < requirement) {
+        return false;
+      }
+      while (user.level_experience >= requirement) {
+        requirement = this.computeRequireExperience(user.level);
+        user.level++;
+        user.level_experience -= requirement;
+      }
+    } else {
+      user.level++;
+      user.level_experience = BigInt(0);
+    }
+    await this.prisma.users.update({
+      where: { id: user.id },
+      data: { level: user.level, level_experience: user.level_experience },
+    });
+    return true;
+  }
+
+  async addUserExperience(user: UserModel, amount: bigint) {
+    user = await this.prisma.users.update({
+      where: { id: user.id },
+      data: { level_experience: user.level_experience + amount },
+    });
+    return await this.userUpgrade(user);
+  }
+
   async activeUser(active_code: string) {
     const code = await this.prisma.user_tokens.findUnique({
       where: { token: active_code },
