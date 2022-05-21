@@ -1,4 +1,17 @@
-import { Body, Controller, Delete, Post, HttpCode, Patch, Put, Res, UseGuards, Request, Get, Query } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Post,
+  HttpCode,
+  Patch,
+  Put,
+  Res,
+  UseGuards,
+  Request,
+  Get,
+  Query,
+} from "@nestjs/common";
 import { MailerService } from "@nestjs-modules/mailer";
 import { JwtAuthGuard } from "../guards/jwt.guard";
 import { PermissionsGuard } from "../decorators/permissions.guard";
@@ -8,10 +21,16 @@ import { v4 as uuidv4 } from "uuid";
 import { PrismaService } from "../services/prisma.service";
 import { UsersService } from "../services/users.service";
 import { LocalAuthGuard } from "../guards/local.guard";
+import { BackpacksService } from "../services/backpacks.service";
 
 @Controller("/security/users")
 export class UsersController {
-  constructor(private prisma: PrismaService, private mailerService: MailerService, private userService: UsersService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailerService: MailerService,
+    private readonly usersService: UsersService,
+    private readonly backpacksService: BackpacksService,
+  ) {}
 
   @Post("/signup")
   @HttpCode(200)
@@ -19,10 +38,11 @@ export class UsersController {
     try {
       // Initialize the UUID
       user.id = uuidv4();
+      user.backpack_id = uuidv4();
 
       // Check duplicate
       let duplicate: any;
-      duplicate = await this.userService.getUserByUsername(user.username);
+      duplicate = await this.usersService.getUserByUsername(user.username);
       if (duplicate != null) {
         return response.status(400).send({
           Status: {
@@ -33,42 +53,41 @@ export class UsersController {
           Response: null,
         });
       }
-      duplicate = await this.userService.getUserByEmail(user.email);
+      duplicate = await this.usersService.getUserByEmail(user.email);
       if (duplicate != null) {
         return response.status(400).send({
           Status: {
             Code: "DATA_ERROR",
-            CodeDetail: "ALREADY_REGISTED",
+            CodeDetail: "ALREADY_REGISTERED",
             Message: "Your email has been used, check you maybe already registered.",
           },
           Response: duplicate,
         });
       }
 
-      // Create user activation token
-      await this.prisma.user_tokens.deleteMany({ where: { issuer_id: user.id } });
-
       // Insert to database
-      const [activeToken, data] = await this.prisma.$transaction([
+      const token = uuidv4().toUpperCase().slice(0, 6);
+      await this.prisma.$transaction([
         this.prisma.user_tokens.create({
           data: {
             id: uuidv4(),
             issuer_id: user.id,
-            token: uuidv4().toUpperCase().slice(0, 6),
+            token: token,
           },
         }),
-        this.userService.createUserSynchronous(user),
+        this.backpacksService.createBackpackSynchronous(true, user.backpack_id),
+        this.usersService.createUserSynchronous(user),
       ]);
 
       // Send mail
       this.mailerService
         .sendMail({
-          to: data.email,
-          subject: "CodingLand @" + data.username + " | Email Verify",
+          to: user.email,
+          subject: "CodingLand @" + user.username + " | Email Verify",
           template: "activation",
           context: {
-            user: data,
-            code: activeToken.token,
+            user: user,
+            code: token,
           },
         })
         .then(() => {
@@ -108,7 +127,7 @@ export class UsersController {
   async activeUser(@Body() body: object, @Res() response: any) {
     const code = body["code"];
     try {
-      if (await this.userService.activeUser(code)) {
+      if (await this.usersService.activeUser(code)) {
         return response.status(200).send({
           Status: {
             Code: "OK",
@@ -141,7 +160,7 @@ export class UsersController {
   @HttpCode(200)
   @UseGuards(LocalAuthGuard)
   async getAccessToken(@Request() request: any) {
-    const token = this.userService.signJWT(request.user);
+    const token = this.usersService.signJWT(request.user);
     return {
       Status: {
         Code: "OK",
@@ -185,7 +204,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions("users:create")
   async create_user(@Body() user: UserModel, @Res() response: any) {
-    if ((await this.userService.getUserByUsername(user.username)) != null) {
+    if ((await this.usersService.getUserByUsername(user.username)) != null) {
       return response.status(400).send({
         Status: {
           Code: "DATA_ERROR",
@@ -211,7 +230,7 @@ export class UsersController {
       });
     }
 
-    const data = await this.userService.createUser(user);
+    const data = await this.usersService.createUser(user);
     delete data["password"];
     return response.send({
       Status: {

@@ -5,6 +5,7 @@ import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
 import { LocalStrategy } from "src/guards/local.strategy";
 import { JwtStrategy } from "src/guards/jwt.strategy";
+import { BackpacksModule } from "./backpacks.module";
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { JwtStrategy } from "src/guards/jwt.strategy";
       signOptions: { expiresIn: "1h" },
     }),
     PassportModule,
+    BackpacksModule,
   ],
   providers: [UsersService, LocalStrategy, JwtStrategy],
   exports: [UsersService],

@@ -1,15 +1,19 @@
-import { v4 as uuidv4 } from "uuid";
 import { Injectable } from "@nestjs/common";
 import { users as UserModel, developer_clients as ClientModel, PrismaPromise } from "@prisma/client";
 import { PrismaService } from "./prisma.service";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
+import { BackpacksService } from "./backpacks.service";
 
 @Injectable()
 export class UsersService {
   public static secret = process.env.APPLICATION_SECRET;
 
-  constructor(private readonly jwtService: JwtService, private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
+    private readonly backpacksService: BackpacksService,
+  ) {}
 
   async getUserByUID(uid: string): Promise<any> {
     return await this.prisma.users.findUnique({ where: { id: uid } });
@@ -40,7 +44,8 @@ export class UsersService {
     user.group_id = user.group_id ? user.group_id : "";
     user.lock_id = "";
     user.password = await bcrypt.hash(user.password, await bcrypt.genSalt());
-    await this.prisma.users.create({ data: user });
+    user = await this.prisma.users.create({ data: user });
+    await this.backpacksService.createBackpackAndAssign(user);
     return user;
   }
 
@@ -48,7 +53,7 @@ export class UsersService {
     user.attributes = user.attributes ? user.attributes : {};
     user.permissions = user.permissions ? user.permissions : [];
     user.description = user.description ? user.description : "He didn't write any things...";
-    user.backpack_id = "";
+    user.backpack_id = user.backpack_id ? user.backpack_id : "";
     user.group_id = "";
     user.group_id = user.group_id ? user.group_id : "";
     user.lock_id = "";

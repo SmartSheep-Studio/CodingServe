@@ -6,7 +6,7 @@ import { developer_clients as ClientModel, users as UserModel } from "@prisma/cl
 
 @Injectable()
 export class DeveloperService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async signup_developer(user: UserModel) {
     if (!user) {
