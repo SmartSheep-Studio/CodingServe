@@ -1,6 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
+import { OnlineEventInterceptor } from "./interceptors/OnlineEvent.interceptor";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const JSONBigInt = require("json-bigint");

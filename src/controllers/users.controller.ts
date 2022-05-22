@@ -23,6 +23,7 @@ import { PrismaService } from "../services/prisma.service";
 import { UsersService } from "../services/users.service";
 import { LocalAuthGuard } from "../guards/local.guard";
 import { BackpacksService } from "../services/backpacks.service";
+
 @Controller("/security/users")
 export class UsersController {
   constructor(
@@ -124,8 +125,7 @@ export class UsersController {
 
   @Post("/active")
   @HttpCode(200)
-  async activeUser(@Body() body: object, @Res() response: any) {
-    const code = body["code"];
+  async activeUser(@Body("code") code: string, @Res() response: any) {
     try {
       if (await this.usersService.activeUser(code)) {
         return response.status(200).send({
@@ -172,8 +172,8 @@ export class UsersController {
 
   @Get("/profile")
   @UseGuards(JwtAuthGuard)
-  async getUserProfile(@Request() request: any, @Query() options: object) {
-    if (options["detail"] === "yes") {
+  async getUserProfile(@Request() request: any, @Query("detail") detail: string) {
+    if (detail === "yes") {
       const user = await this.prisma.users.findUnique({ where: { id: request.user.id } });
       const group = await this.prisma.user_groups.findUnique({ where: { id: request.user.group_id } });
       const backpack = await this.prisma.backpacks.findUnique({ where: { id: request.user.backpack_id } });
@@ -279,7 +279,7 @@ export class UsersController {
   @Delete()
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions("users:delete")
-  async delete_user(id: string) {
+  async delete_user(@Body("id") id: string) {
     await this.prisma.users.delete({ where: { id: id } });
     return {
       Status: {
@@ -297,7 +297,7 @@ export class UsersController {
     let user: UserModel;
     user = await this.prisma.users.findUnique({ where: { id: id ? id : request.user.id } });
     const isUpgraded = await this.usersService.addUserExperience(user, BigInt(amount));
-    user = await this.prisma.users.findUnique({ where: { id: request.user.id } });
+    user = await this.prisma.users.findUnique({ where: { id: id ? id : request.user.id } });
     return {
       Status: {
         Code: "OK",
@@ -309,5 +309,20 @@ export class UsersController {
         NextUpgradeRequirement: this.usersService.computeRequireExperience(user.level),
       },
     };
+  }
+
+  @Put("/signin")
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  async dailySignin(@Req() request: any, @Res() response: any, @Body("id") id?: string) {
+    // TODO: add reCaptcha verify
+    const user = await this.prisma.users.findUnique({ where: { id: id ? id : request.user.id } });
+    const rewards = await this.usersService.userDailySignin(user);
+    return response.status(200).send({
+      Status: {
+        Code: rewards ? "OK" : "ALREADY_SIGNED_TODAY",
+        Message: rewards ? "Daily sign in successfully." : "You already sign in today.",
+      },
+      Response: rewards,
+    });
   }
 }

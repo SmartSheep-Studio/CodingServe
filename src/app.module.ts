@@ -7,6 +7,8 @@ import { MailerModule } from "@nestjs-modules/mailer";
 import { PugAdapter } from "@nestjs-modules/mailer/dist/adapters/pug.adapter";
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
+import { APP_INTERCEPTOR } from "@nestjs/core";
+import { OnlineEventInterceptor } from "./interceptors/OnlineEvent.interceptor";
 
 @Module({
   imports: [
@@ -31,6 +33,6 @@ import { join } from "path";
     DeveloperModule,
   ],
   controllers: [StateController],
-  providers: [],
+  providers: [{ provide: APP_INTERCEPTOR, useClass: OnlineEventInterceptor }],
 })
 export class AppModule {}

@@ -7,5 +7,12 @@ export default {
       description: "Currency used as an expression of affection",
       rarity: "common",
     },
+    rational: { name: "Rational", description: "Necessary to initiate logical operation", rarity: "special" },
+    energy: {
+      name: "Energy",
+      description: "Essentials for running a Logical virtual practice environment",
+      rarity: "special",
+    },
+    "share-ticket": { name: "Share Ticket", description: "Necessary to initiate logical operation", rarity: "special" },
   },
 };

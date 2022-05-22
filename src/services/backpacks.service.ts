@@ -7,7 +7,12 @@ import { v4 as uuidv4 } from "uuid";
 export class BackpacksService {
   constructor(private readonly prisma: PrismaService) {}
 
-  public static presents = { "code-coin": { amount: 1200, attributes: {} } };
+  public static presents = {
+    "code-coin": { amount: 1200, attributes: {} },
+    rational: { amount: 86, attributes: {} },
+    energy: { amount: 20, attributes: {} },
+    "share-ticket": { amount: 10, attributes: {} },
+  };
 
   async createBackpack(present = false, id = uuidv4()) {
     return await this.prisma.backpacks.create({
@@ -17,6 +22,7 @@ export class BackpacksService {
       },
     });
   }
+
   createBackpackSynchronous(present = false, id = uuidv4()) {
     return this.prisma.backpacks.create({
       data: {

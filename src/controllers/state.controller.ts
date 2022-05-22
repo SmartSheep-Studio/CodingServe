@@ -17,7 +17,7 @@ export class StateController {
         Message: process.env.SERVER_MAINTENANCE
           ? process.env.SERVER_MAINTENANCE_DESCRIPTION
           : "All service and module are working perfectly!",
-        Services: process.env.SERVER_MAINTENANCE && process.env.SERVER_MAINTENANCE_DISABLE ? "UP" : "DOWN",
+        Services: process.env.SERVER_MAINTENANCE ? "DOWN" : "UP",
         NodeName: "Logic Mainland",
         Version: packages.version,
         Details: {

@@ -19,7 +19,7 @@ model users {
   birthday         DateTime @default(now()) @db.DateTime(0)
   // Level
   level            Int      @default(1)
-  level_experience BigInt      @default(0)
+  level_experience BigInt   @default(0)
   // IDs
   group_id         String   @db.VarChar(36)
   backpack_id      String   @db.VarChar(36)
@@ -27,6 +27,10 @@ model users {
   // Statues
   is_active        Boolean  @default(false)
   is_locked        Boolean  @default(false)
+  // Last
+  last_signin_at   DateTime?
+  last_online_at   DateTime?
+  last_online_ip   String?
   // DateTimes
   created_at       DateTime @default(now()) @db.DateTime(0)
   updated_at       DateTime @updatedAt
@@ -75,6 +79,26 @@ model backpacks {
   id         String   @id @db.VarChar(36)
   // Informations
   materials  Json
+  // DateTimes
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @updatedAt
+}
+
+model backpack_map {
+  id         String   @id @db.VarChar(36)
+  // Informations
+  maps       Json
+  // DateTimes
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @updatedAt
+}
+
+model records_activites {
+  id         Int      @id @default(autoincrement())
+  // Informations
+  // Available types "online", "signin", "operation", "trade"
+  type       String
+  data       Json
   // DateTimes
   created_at DateTime @default(now()) @db.DateTime(0)
   updated_at DateTime @updatedAt

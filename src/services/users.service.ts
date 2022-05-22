@@ -4,6 +4,7 @@ import { PrismaService } from "./prisma.service";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import { BackpacksService } from "./backpacks.service";
+import MaterialsUtils from "../utils/MaterialsUtils";
 
 @Injectable()
 export class UsersService {
@@ -66,7 +67,7 @@ export class UsersService {
       Math.round(
         level *
           Number.parseInt(process.env.LEVEL_PERLEVEL_UPGRADE_REQUIRE) *
-          (level * Number.parseFloat(process.env.LEVEL_PERLEVEL_UPGRADE_DIFFICULTY)),
+          Number.parseFloat(process.env.LEVEL_PERLEVEL_UPGRADE_DIFFICULTY),
       ),
     );
   }
@@ -100,6 +101,55 @@ export class UsersService {
       data: { level_experience: user.level_experience + amount },
     });
     return await this.userUpgrade(user);
+  }
+
+  async updateLastOnlineIP(uid: string, ip: string) {
+    await this.prisma.users.update({ where: { id: uid }, data: { last_online_at: new Date(), last_online_ip: ip } });
+  }
+
+  async userDailySignin(user: UserModel): Promise<object | null> {
+    if (user.last_signin_at != null) {
+      if (user.last_signin_at.toDateString() === new Date().toDateString()) {
+        return null;
+      }
+    }
+    const rewards = {
+      CodeCoins: Math.floor(Math.random() * (user.level * 2000)),
+      Rational: 86 + (user.level - 1) * 2,
+      Energy: 20 + (user.level - 1) * 8,
+      ShareTicket: 10 + (user.level - 1),
+    };
+
+    const backpack = await this.prisma.backpacks.findUnique({ where: { id: user.backpack_id } });
+
+    const updateTo = {
+      "code-coin": {
+        amount: MaterialsUtils.getMaterialAmount(backpack.materials, "code-coin") + rewards.CodeCoins,
+        attributes: backpack.materials["code-coin"].attributes,
+      },
+      rational: {
+        amount: rewards.Rational,
+        attributes: backpack.materials["rational"].attributes,
+      },
+      energy: {
+        amount: rewards.Energy,
+        attributes: backpack.materials["energy"].attributes,
+      },
+      "share-ticket": {
+        amount: rewards.ShareTicket,
+        attributes: backpack.materials["share-ticket"].attributes,
+      },
+    };
+
+    await this.prisma.$transaction([
+      this.prisma.users.update({ where: { id: user.id }, data: { last_signin_at: new Date() } }),
+      this.prisma.backpacks.update({
+        where: { id: user.backpack_id },
+        data: { materials: Object.assign(backpack.materials, updateTo) },
+      }),
+    ]);
+
+    return rewards;
   }
 
   async activeUser(active_code: string) {
