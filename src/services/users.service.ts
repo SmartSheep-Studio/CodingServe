@@ -5,6 +5,7 @@ import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import { BackpacksService } from "./backpacks.service";
 import MaterialsUtils from "../utils/MaterialsUtils";
+import { RecordsService } from "./records.service";
 
 @Injectable()
 export class UsersService {
@@ -14,6 +15,7 @@ export class UsersService {
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
     private readonly backpacksService: BackpacksService,
+    private readonly recordsService: RecordsService,
   ) {}
 
   async getUserByUID(uid: string): Promise<any> {
@@ -114,17 +116,19 @@ export class UsersService {
       }
     }
     const rewards = {
-      CodeCoins: Math.floor(Math.random() * (user.level * 2000)),
+      Experience: 1800,
+      CodeCoin: Math.floor(Math.random() * (user.level * 100 + 2000)),
       Rational: 86 + (user.level - 1) * 2,
       Energy: 20 + (user.level - 1) * 8,
       ShareTicket: 10 + (user.level - 1),
     };
 
+    await this.addUserExperience(user, BigInt(rewards.Experience));
     const backpack = await this.prisma.backpacks.findUnique({ where: { id: user.backpack_id } });
 
     const updateTo = {
       "code-coin": {
-        amount: MaterialsUtils.getMaterialAmount(backpack.materials, "code-coin") + rewards.CodeCoins,
+        amount: MaterialsUtils.getMaterialAmount(backpack.materials, "code-coin") + rewards.CodeCoin,
         attributes: backpack.materials["code-coin"].attributes,
       },
       rational: {
@@ -148,6 +152,8 @@ export class UsersService {
         data: { materials: Object.assign(backpack.materials, updateTo) },
       }),
     ]);
+
+    await this.recordsService.createNewActivityRecord("signin", { rewards: rewards });
 
     return rewards;
   }

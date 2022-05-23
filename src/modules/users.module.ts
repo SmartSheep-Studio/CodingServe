@@ -6,6 +6,7 @@ import { PassportModule } from "@nestjs/passport";
 import { LocalStrategy } from "src/guards/local.strategy";
 import { JwtStrategy } from "src/guards/jwt.strategy";
 import { BackpacksModule } from "./backpacks.module";
+import { RecordsModule } from "./records.module";
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { BackpacksModule } from "./backpacks.module";
     }),
     PassportModule,
     BackpacksModule,
+    RecordsModule,
   ],
   providers: [UsersService, LocalStrategy, JwtStrategy],
   exports: [UsersService],

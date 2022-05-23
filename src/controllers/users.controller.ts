@@ -311,7 +311,7 @@ export class UsersController {
     };
   }
 
-  @Put("/signin")
+  @Patch("/signin")
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   async dailySignin(@Req() request: any, @Res() response: any, @Body("id") id?: string) {
     // TODO: add reCaptcha verify
