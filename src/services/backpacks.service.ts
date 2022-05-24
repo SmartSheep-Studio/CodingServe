@@ -3,6 +3,13 @@ import { PrismaService } from "./prisma.service";
 import { users as UserModel } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 
+type Material = {
+  id: string;
+  amount: number;
+  attributes?: object;
+  isOverride?: boolean;
+};
+
 @Injectable()
 export class BackpacksService {
   constructor(private readonly prisma: PrismaService) {}
@@ -49,5 +56,50 @@ export class BackpacksService {
         data: { backpack_id: backpackId },
       }),
     ]);
+  }
+
+  async addMaterialToBackpack(id: string, material: Material) {
+    const backpack = await this.prisma.backpacks.findUnique({ where: { id: id } });
+    if (backpack == null) {
+      return null;
+    }
+
+    const updateTo = Object.assign(backpack.materials, {
+      [material.id]: {
+        amount: material.isOverride
+          ? material.amount
+          : (backpack.materials[material.id] ? backpack.materials[material.id].amount : 0) + material.amount,
+        attributes: Object.assign(
+          backpack.materials[material.id] ? backpack.materials[material.id].amount : {},
+          material.attributes ? material.attributes : {},
+        ),
+      },
+    });
+
+    return await this.prisma.backpacks.update({ where: { id: id }, data: { materials: updateTo } });
+  }
+
+  async addMaterialsToBackpack(id: string, materials: Array<Material>) {
+    const backpack = await this.prisma.backpacks.findUnique({ where: { id: id } });
+    if (backpack == null) {
+      return null;
+    }
+
+    let updateTo = backpack.materials;
+    for (const material of materials) {
+      updateTo = Object.assign(updateTo, {
+        [material.id]: {
+          amount: material.isOverride
+            ? material.amount
+            : (backpack.materials[material.id] ? backpack.materials[material.id].amount : 0) + material.amount,
+          attributes: Object.assign(
+            backpack.materials[material.id] ? backpack.materials[material.id].amount : {},
+            material.attributes ? material.attributes : {},
+          ),
+        },
+      });
+    }
+
+    return await this.prisma.backpacks.update({ where: { id: id }, data: { materials: updateTo } });
   }
 }

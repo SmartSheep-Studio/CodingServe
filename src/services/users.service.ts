@@ -117,7 +117,7 @@ export class UsersService {
     }
     const rewards = {
       Experience: 1800,
-      CodeCoin: Math.floor(Math.random() * (user.level * 100 + 2000)),
+      CodeCoin: Math.floor(Math.random() * (user.level * 10 + 200)),
       Rational: 86 + (user.level - 1) * 2,
       Energy: 20 + (user.level - 1) * 8,
       ShareTicket: 10 + (user.level - 1),
@@ -126,34 +126,17 @@ export class UsersService {
     await this.addUserExperience(user, BigInt(rewards.Experience));
     const backpack = await this.prisma.backpacks.findUnique({ where: { id: user.backpack_id } });
 
-    const updateTo = {
-      "code-coin": {
-        amount: MaterialsUtils.getMaterialAmount(backpack.materials, "code-coin") + rewards.CodeCoin,
-        attributes: backpack.materials["code-coin"].attributes,
-      },
-      rational: {
-        amount: rewards.Rational,
-        attributes: backpack.materials["rational"].attributes,
-      },
-      energy: {
-        amount: rewards.Energy,
-        attributes: backpack.materials["energy"].attributes,
-      },
-      "share-ticket": {
-        amount: rewards.ShareTicket,
-        attributes: backpack.materials["share-ticket"].attributes,
-      },
-    };
+    await this.backpacksService.addMaterialsToBackpack(backpack.id, [
+      { id: "code-coin", amount: rewards.CodeCoin },
+      { id: "rational", amount: rewards.Rational, isOverride: true },
+      { id: "energy", amount: rewards.Energy, isOverride: true },
+      { id: "share-ticket", amount: rewards.ShareTicket, isOverride: true },
+    ]);
 
     await this.prisma.$transaction([
       this.prisma.users.update({ where: { id: user.id }, data: { last_signin_at: new Date() } }),
-      this.prisma.backpacks.update({
-        where: { id: user.backpack_id },
-        data: { materials: Object.assign(backpack.materials, updateTo) },
-      }),
+      this.recordsService.createNewActivityRecordSynchronous("signin", { rewards: rewards }),
     ]);
-
-    await this.recordsService.createNewActivityRecord("signin", { rewards: rewards });
 
     return rewards;
   }
