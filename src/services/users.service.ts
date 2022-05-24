@@ -135,7 +135,7 @@ export class UsersService {
 
     await this.prisma.$transaction([
       this.prisma.users.update({ where: { id: user.id }, data: { last_signin_at: new Date() } }),
-      this.recordsService.createNewActivityRecordSynchronous("signin", { rewards: rewards }),
+      this.recordsService.createNewActivityRecordSynchronous(user.id, "daily-signin", { rewards: rewards }),
     ]);
 
     return rewards;

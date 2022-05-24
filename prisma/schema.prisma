@@ -95,6 +95,7 @@ model backpack_map {
 
 model records_activites {
   id         Int      @id @default(autoincrement())
+  uid        String   @db.VarChar(36)
   // Informations
   // Available types "online", "signin", "operation", "trade"
   type       String

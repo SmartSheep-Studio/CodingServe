@@ -12,6 +12,7 @@ import {
   Get,
   Query,
   Req,
+  Ip,
 } from "@nestjs/common";
 import { MailerService } from "@nestjs-modules/mailer";
 import { JwtAuthGuard } from "../guards/jwt.guard";
@@ -23,6 +24,7 @@ import { PrismaService } from "../services/prisma.service";
 import { UsersService } from "../services/users.service";
 import { LocalAuthGuard } from "../guards/local.guard";
 import { BackpacksService } from "../services/backpacks.service";
+import { RecordsService } from "../services/records.service";
 
 @Controller("/security/users")
 export class UsersController {
@@ -31,6 +33,7 @@ export class UsersController {
     private readonly mailerService: MailerService,
     private readonly usersService: UsersService,
     private readonly backpacksService: BackpacksService,
+    private readonly recordsService: RecordsService,
   ) {}
 
   @Post("/signup")
@@ -159,8 +162,9 @@ export class UsersController {
   @Post("/signin")
   @HttpCode(200)
   @UseGuards(LocalAuthGuard)
-  async getAccessToken(@Request() request: any) {
+  async getAccessToken(@Request() request: any, @Ip() ip: string) {
     const token = this.usersService.signJWT(request.user);
+    await this.recordsService.createNewActivityRecord(request.user.id, "signin", { at: ip });
     return {
       Status: {
         Code: "OK",

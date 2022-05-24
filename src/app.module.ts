@@ -7,8 +7,9 @@ import { MailerModule } from "@nestjs-modules/mailer";
 import { PugAdapter } from "@nestjs-modules/mailer/dist/adapters/pug.adapter";
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
-import { APP_INTERCEPTOR } from "@nestjs/core";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { OnlineEventInterceptor } from "./interceptors/OnlineEvent.interceptor";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 
 @Module({
   imports: [
@@ -28,11 +29,21 @@ import { OnlineEventInterceptor } from "./interceptors/OnlineEvent.interceptor";
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, "..", "ui"),
     }),
+    ThrottlerModule.forRoot({
+      ttl: 60,
+      limit: 10,
+    }),
     UsersModule,
     PrismaModule,
     DeveloperModule,
   ],
   controllers: [StateController],
-  providers: [{ provide: APP_INTERCEPTOR, useClass: OnlineEventInterceptor }],
+  providers: [
+    { provide: APP_INTERCEPTOR, useClass: OnlineEventInterceptor },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

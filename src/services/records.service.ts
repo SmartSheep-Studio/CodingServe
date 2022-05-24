@@ -5,18 +5,20 @@ import { PrismaService } from "./prisma.service";
 export class RecordsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createNewActivityRecord(type: string, data: object) {
+  async createNewActivityRecord(uid: string, type: string, data: object) {
     return await this.prisma.records_activites.create({
       data: {
+        uid: uid,
         type: type,
         data: data,
       },
     });
   }
 
-  createNewActivityRecordSynchronous(type: string, data: object) {
+  createNewActivityRecordSynchronous(uid: string, type: string, data: object) {
     return this.prisma.records_activites.create({
       data: {
+        uid: uid,
         type: type,
         data: data,
       },
