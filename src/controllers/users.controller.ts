@@ -179,6 +179,7 @@ export class UsersController {
   async getUserProfile(@Request() request: any, @Query("detail") detail: string) {
     if (detail === "yes") {
       const user = await this.prisma.users.findUnique({ where: { id: request.user.id } });
+      const lock = await this.prisma.locks.findUnique({ where: { id: request.user.lock_id } });
       const group = await this.prisma.user_groups.findUnique({ where: { id: request.user.group_id } });
       const backpack = await this.prisma.backpacks.findUnique({ where: { id: request.user.backpack_id } });
       return {
@@ -187,6 +188,7 @@ export class UsersController {
           Message: "Successfully fetch your detail profile",
         },
         Response: {
+          Lock: lock,
           User: user,
           Group: group,
           Backpack: backpack,
