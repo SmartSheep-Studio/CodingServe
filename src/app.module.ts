@@ -10,6 +10,10 @@ import { join } from "path";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { OnlineEventInterceptor } from "./interceptors/OnlineEvent.interceptor";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { LocksModule } from "./modules/locks.module";
+import { LocksGuard } from "./decorators/locks.guard";
+import { JwtAuthGuard } from "./guards/jwt.guard";
+import { PermissionsGuard } from "./decorators/permissions.guard";
 
 @Module({
   imports: [
@@ -36,6 +40,7 @@ import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
     UsersModule,
     PrismaModule,
     DeveloperModule,
+    LocksModule,
   ],
   controllers: [StateController],
   providers: [
@@ -44,6 +49,8 @@ import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: LocksGuard },
   ],
 })
 export class AppModule {}
