@@ -24,4 +24,24 @@ export class RecordsService {
       },
     });
   }
+
+  async createNewAnnouncementsRecord(publisher: string, type: string, data: object) {
+    return await this.prisma.records_announcements.create({
+      data: {
+        publisher: publisher,
+        type: type,
+        data: data,
+      },
+    });
+  }
+
+  createNewAnnouncementsRecordSynchronous(publisher: string, type: string, data: object) {
+    return this.prisma.records_announcements.create({
+      data: {
+        publisher: publisher,
+        type: type,
+        data: data,
+      },
+    });
+  }
 }

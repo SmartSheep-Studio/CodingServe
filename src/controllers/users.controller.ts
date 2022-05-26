@@ -25,6 +25,7 @@ import { UsersService } from "../services/users.service";
 import { LocalAuthGuard } from "../guards/local.guard";
 import { BackpacksService } from "../services/backpacks.service";
 import { RecordsService } from "../services/records.service";
+import { RealIP } from "nestjs-real-ip";
 
 @Controller("/security/users")
 export class UsersController {
@@ -162,7 +163,7 @@ export class UsersController {
   @Post("/signin")
   @HttpCode(200)
   @UseGuards(LocalAuthGuard)
-  async getAccessToken(@Request() request: any, @Ip() ip: string) {
+  async getAccessToken(@Request() request: any, @RealIP() ip: string) {
     const token = this.usersService.signJWT(request.user);
     await this.recordsService.createNewActivityRecord(request.user.id, "signin", { at: ip });
     return {
@@ -176,7 +177,7 @@ export class UsersController {
 
   @Get("/profile")
   @UseGuards(JwtAuthGuard)
-  async getUserProfile(@Request() request: any, @Query("detail") detail: string) {
+  async getUserProfile(@Request() request: any, @Query("detail") detail?: string) {
     if (detail === "yes") {
       const user = await this.prisma.users.findUnique({ where: { id: request.user.id } });
       const lock = await this.prisma.locks.findUnique({ where: { id: request.user.lock_id } });
@@ -317,18 +318,18 @@ export class UsersController {
     };
   }
 
-  @Patch("/signin")
-  @UseGuards(JwtAuthGuard, PermissionsGuard)
-  async dailySignin(@Req() request: any, @Res() response: any, @Body("id") id?: string) {
+  @Patch("/daily-signin")
+  @HttpCode(200)
+  async dailySignin(@Request() request: any, @Body("id") id?: string) {
     // TODO: add reCaptcha verify
     const user = await this.prisma.users.findUnique({ where: { id: id ? id : request.user.id } });
     const rewards = await this.usersService.userDailySignin(user);
-    return response.status(200).send({
+    return {
       Status: {
         Code: rewards ? "OK" : "ALREADY_SIGNED_TODAY",
         Message: rewards ? "Daily sign in successfully." : "You already sign in today.",
       },
       Response: rewards,
-    });
+    };
   }
 }
