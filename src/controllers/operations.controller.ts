@@ -22,7 +22,9 @@ export class OperationController {
     for (const item of response) {
       for (const judge of item.data["judgement"]) {
         if (judge.hidden) {
-          delete item.data["judgement"][item.data["judgement"].indexOf(judge)];
+          item.data["judgement"] = item.data["judgement"].filter((value: any) => {
+            return value !== judge;
+          });
         }
       }
     }
