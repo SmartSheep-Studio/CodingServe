@@ -1,4 +1,5 @@
 import { Controller, Get, Request, Query, Post, Body, HttpCode, Res } from "@nestjs/common";
+import { Permissions } from "../decorators/permissions.decorator";
 import { OperationService } from "../services/operations.service";
 import { PrismaService } from "../services/prisma.service";
 
@@ -39,6 +40,7 @@ export class OperationController {
 
   @Post()
   @HttpCode(200)
+  @Permissions("create:operations")
   async createNewOperation(
     @Request() request: any,
     @Res() res: any,
