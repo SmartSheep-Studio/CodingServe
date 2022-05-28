@@ -13,7 +13,7 @@ import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { LocksModule } from "./modules/locks.module";
 import { LocksGuard } from "./decorators/locks.guard";
 import { JwtAuthGuard } from "./guards/jwt.guard";
-import { PermissionsGuard } from "./decorators/permissions.guard";
+import { OperationModule } from "./modules/operations.module";
 
 @Module({
   imports: [
@@ -41,6 +41,7 @@ import { PermissionsGuard } from "./decorators/permissions.guard";
     PrismaModule,
     DeveloperModule,
     LocksModule,
+    OperationModule,
   ],
   controllers: [StateController],
   providers: [

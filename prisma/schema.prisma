@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["filterJson"]
 }
 
 datasource db {
@@ -8,32 +9,32 @@ datasource db {
 }
 
 model users {
-  id               String   @id @db.VarChar(36)
+  id               String    @id @db.VarChar(36)
   // Informations
-  username         String   @unique @db.VarChar(80)
-  password         String   @db.Text
-  email            String   @unique @db.VarChar(512)
+  username         String    @unique @db.VarChar(80)
+  password         String    @db.Text
+  email            String    @unique @db.VarChar(512)
   attributes       Json
   permissions      Json
-  description      String   @db.VarChar(512)
-  birthday         DateTime @default(now()) @db.DateTime(0)
+  description      String    @db.VarChar(512)
+  birthday         DateTime  @default(now()) @db.DateTime(0)
   // Level
-  level            Int      @default(1)
-  level_experience BigInt   @default(0)
+  level            Int       @default(1)
+  level_experience BigInt    @default(0)
   // IDs
-  group_id         String   @db.VarChar(36)
-  backpack_id      String   @db.VarChar(36)
-  lock_id          String   @db.VarChar(36)
+  group_id         String    @db.VarChar(36)
+  backpack_id      String    @db.VarChar(36)
+  lock_id          String    @db.VarChar(36)
   // Statues
-  is_active        Boolean  @default(false)
-  is_locked        Boolean  @default(false)
+  is_active        Boolean   @default(false)
+  is_locked        Boolean   @default(false)
   // Last
   last_signin_at   DateTime?
   last_online_at   DateTime?
   last_online_ip   String?
   // DateTimes
-  created_at       DateTime @default(now()) @db.DateTime(0)
-  updated_at       DateTime @updatedAt
+  created_at       DateTime  @default(now()) @db.DateTime(0)
+  updated_at       DateTime  @updatedAt
 }
 
 model user_groups {
@@ -117,16 +118,29 @@ model records_announcements {
   updated_at DateTime @updatedAt
 }
 
+model operations {
+  id         String   @id @db.VarChar(36)
+  publisher  String   @db.VarChar(36)
+  // Informations
+  // Available types "editing", "published", "deleted"
+  status     String   @default("editing") @db.VarChar(12)
+  data       Json
+  conditions Json
+  // DateTimes
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @updatedAt
+}
+
 model locks {
-  id             String   @id @db.VarChar(36)
-  issuer_id      String   @db.VarChar(36)
+  id             String    @id @db.VarChar(36)
+  issuer_id      String    @db.VarChar(36)
   // Informations
   // Available status "processing", "disapprove", "approval", "unlocked"
-  status         String   @default("processing") @db.VarChar(12)
-  description    String   @db.VarChar(512)
-  approval_count Int      @default(1)
+  status         String    @default("processing") @db.VarChar(12)
+  description    String    @db.VarChar(512)
+  approval_count Int       @default(1)
   // DateTimes
   expired_at     DateTime?
-  created_at     DateTime @default(now()) @db.DateTime(0)
-  updated_at     DateTime @updatedAt
+  created_at     DateTime  @default(now()) @db.DateTime(0)
+  updated_at     DateTime  @updatedAt
 }
