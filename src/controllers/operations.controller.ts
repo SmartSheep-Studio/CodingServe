@@ -7,12 +7,17 @@ export class OperationController {
   constructor(private readonly prisma: PrismaService, private readonly operationService: OperationService) {}
 
   @Get()
-  async listAllAvailableOperations(@Request() request: any, @Query("take") take = 10000, @Query("skip") skip = 0) {
+  async listAllOperations(
+    @Request() request: any,
+    @Query("take") take = 10000,
+    @Query("skip") skip = 0,
+    @Query("ignore") ignore?: string,
+  ) {
     const response = await this.prisma.operations.findMany({
       orderBy: { created_at: "desc" },
       skip: skip,
       take: take,
-      where: { conditions: { path: "$.level", lt: request.user.level } },
+      where: ignore === "yes" ? {} : { conditions: { path: "$.level", lt: request.user.level } },
     });
     for (const item of response) {
       for (const judge of item.data["judgement"]) {
