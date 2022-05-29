@@ -2,26 +2,39 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "./prisma.service";
 import { v4 as uuidv4 } from "uuid";
 import { operations as OperationModel, records_operation as RecordOperationModel } from "@prisma/client";
+import { BackpacksService } from "./backpacks.service";
 import axios from "axios";
 
 @Injectable()
-export class OperationService {
-  constructor(private readonly prisma: PrismaService) {}
+export class OperationsService {
+  constructor(private readonly prisma: PrismaService, private readonly backpacksService: BackpacksService) {}
 
-  async createNewOperation(data: object, conditions: object, publisher: string, id?: string) {
+  async createNewOperation(
+    data: object,
+    conditions: object,
+    rewards: Array<object>,
+    costs: Array<object>,
+    publisher: string,
+    id?: string,
+  ) {
     return await this.prisma.operations.create({
       data: {
         id: id ? id : uuidv4(),
         data: data,
         conditions: conditions,
         publisher: publisher,
+        rewards: rewards,
+        costs: costs,
       },
     });
   }
 
-  async getOperationDetail(id: string): Promise<{ operation: OperationModel; records: RecordOperationModel[] }> {
+  async getOperationDetail(
+    uid: string,
+    id: string,
+  ): Promise<{ operation: OperationModel; records: RecordOperationModel[] }> {
     const operation = await this.prisma.operations.findFirst({ where: { id: id, status: "published" } });
-    const records = await this.prisma.records_operation.findMany({ where: { operation: id } });
+    const records = await this.prisma.records_operation.findMany({ where: { uid: uid, operation: id } });
     return { operation, records };
   }
 
@@ -36,10 +49,34 @@ export class OperationService {
       return null;
     } else if (progress < operation.conditions["progress"]) {
       return null;
+    } else if (
+      !(await this.backpacksService.checkMaterialsToBackpack(user.backpack_id, operation.costs as Array<any>))
+    ) {
+      return operation.costs as Array<any>;
     } else {
-      return await this.prisma.records_operation.create({
-        data: { uid: user.id, operation: operation.id, data: [], status: "working" },
-      });
+      await this.backpacksService.deleteMaterialsToBackpack(user.backpack_id, operation.costs as Array<any>);
+      const [record] = await this.prisma.$transaction([
+        this.prisma.records_operation.create({
+          data: { uid: user.id, operation: operation.id, data: [], status: "working" },
+        }),
+        this.prisma.records_activites.create({
+          data: {
+            uid: user.id,
+            type: "operation",
+            data: { operation: operation.id },
+          },
+        }),
+      ]);
+      return record;
+    }
+  }
+
+  async cancelOperation(uid: string, id: number) {
+    const record = await this.prisma.records_operation.findFirst({ where: { uid: uid, id: id, status: "working" } });
+    if (record == null) {
+      return record;
+    } else {
+      return await this.prisma.records_operation.update({ where: { id: id }, data: { status: "canceled" } });
     }
   }
 
@@ -54,9 +91,7 @@ export class OperationService {
 
     let isFinished = false;
     const isDuplicated =
-      (await this.prisma.records_operation.count({ where: { uid: record.uid, status: "finished" } })) === 0
-        ? false
-        : true;
+      (await this.prisma.records_operation.count({ where: { uid: record.uid, status: "finished" } })) !== 0;
     const mark = [];
     const result = [];
     for (const judge of operation.data["judgement"]) {

@@ -102,4 +102,75 @@ export class BackpacksService {
 
     return await this.prisma.backpacks.update({ where: { id: id }, data: { materials: updateTo } });
   }
+
+  async deleteMaterialToBackpack(id: string, material: Material) {
+    const backpack = await this.prisma.backpacks.findUnique({ where: { id: id } });
+    if (backpack == null) {
+      return null;
+    } else if ((backpack.materials[material.id] ? backpack.materials[material.id].amount : 0) < material.amount) {
+      return null;
+    }
+
+    const updateTo = Object.assign(backpack.materials, {
+      [material.id]: {
+        amount: (backpack.materials[material.id] ? backpack.materials[material.id].amount : 0) - material.amount,
+        attributes: Object.assign(
+          backpack.materials[material.id] ? backpack.materials[material.id].amount : {},
+          material.attributes ? material.attributes : {},
+        ),
+      },
+    });
+
+    return await this.prisma.backpacks.update({ where: { id: id }, data: { materials: updateTo } });
+  }
+
+  async deleteMaterialsToBackpack(id: string, materials: Array<Material>) {
+    const backpack = await this.prisma.backpacks.findUnique({ where: { id: id } });
+    if (backpack == null) {
+      return null;
+    }
+
+    let updateTo = backpack.materials;
+    for (const material of materials) {
+      if ((backpack.materials[material.id] ? backpack.materials[material.id].amount : 0) < material.amount) {
+        return null;
+      } else {
+        updateTo = Object.assign(updateTo, {
+          [material.id]: {
+            amount: (backpack.materials[material.id] ? backpack.materials[material.id].amount : 0) - material.amount,
+            attributes: Object.assign(
+              backpack.materials[material.id] ? backpack.materials[material.id].amount : {},
+              material.attributes ? material.attributes : {},
+            ),
+          },
+        });
+      }
+    }
+
+    return await this.prisma.backpacks.update({ where: { id: id }, data: { materials: updateTo } });
+  }
+
+  async checkMaterialToBackpack(id: string, material: Material) {
+    const backpack = await this.prisma.backpacks.findUnique({ where: { id: id } });
+    if (backpack == null) {
+      return null;
+    } else if ((backpack.materials[material.id] ? backpack.materials[material.id].amount : 0) < material.amount) {
+      return null;
+    }
+    return true;
+  }
+
+  async checkMaterialsToBackpack(id: string, materials: Array<Material>) {
+    const backpack = await this.prisma.backpacks.findUnique({ where: { id: id } });
+    if (backpack == null) {
+      return false;
+    }
+
+    for (const material of materials) {
+      if ((backpack.materials[material.id] ? backpack.materials[material.id].amount : 0) < material.amount) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
