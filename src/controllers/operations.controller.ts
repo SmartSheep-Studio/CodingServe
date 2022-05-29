@@ -219,16 +219,6 @@ export class OperationController {
     @Query("runtime") runtime: string,
     @Query("runtimeVersion") runtimeVersion: string,
   ) {
-    if (!(await this.backpacksService.checkMaterialToBackpack(request.user.backpack_id, { id: "energy", amount: 1 }))) {
-      return res.status(402).send({
-        Status: {
-          Code: "NOT_ENOUGH_RESOURCES",
-          CodeDetail: "ENERGY_NOT_ENOUGH",
-          Message: "Cannot commit operation, cannot pay the cost",
-        },
-        Response: null,
-      });
-    }
     if (code.replace(" ", "") === "") {
       res.status(400).send({
         Status: {
@@ -239,6 +229,18 @@ export class OperationController {
         Response: null,
       });
       return;
+    }
+    if (!(await this.backpacksService.checkMaterialToBackpack(request.user.backpack_id, { id: "energy", amount: 1 }))) {
+      return res.status(402).send({
+        Status: {
+          Code: "NOT_ENOUGH_RESOURCES",
+          CodeDetail: "ENERGY_NOT_ENOUGH",
+          Message: "Cannot commit operation, cannot pay the cost",
+        },
+        Response: null,
+      });
+    } else {
+      await this.backpacksService.deleteMaterialToBackpack(request.user.backpack_id, { id: "energy", amount: 1 });
     }
     const response = await this.operationsService.commitOperation(id, code, runtime, runtimeVersion);
     if (response.Message === "RUNTIME_NOT_AVAILABLE") {

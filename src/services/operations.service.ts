@@ -90,9 +90,6 @@ export class OperationsService {
     }
     const operation = await this.prisma.operations.findUnique({ where: { id: record.operation } });
 
-    // Delete Energy in the backpack
-    await this.backpacksService.deleteMaterialToBackpack(record.uid, { id: "energy", amount: 1 });
-
     // Flags
     let isFinished = false;
     const isDuplicated =
