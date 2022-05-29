@@ -49,7 +49,7 @@ export class OperationController {
   @Get("/records")
   async listAllOperationRecords(
     @Request() request: any,
-    @Query("take") take = 10000,
+    @Query("take") take = 10,
     @Query("skip") skip = 0,
     @Query("ignore") ignore?: string,
   ) {
