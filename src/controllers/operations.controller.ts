@@ -234,7 +234,6 @@ export class OperationController {
       return res.status(402).send({
         Status: {
           Code: "NOT_ENOUGH_RESOURCES",
-          CodeDetail: "ENERGY_NOT_ENOUGH",
           Message: "Cannot commit operation, cannot pay the cost",
         },
         Response: null,
