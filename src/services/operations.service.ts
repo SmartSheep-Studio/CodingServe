@@ -141,14 +141,10 @@ export class OperationsService {
       },
     });
 
-    // Release rewards
-    if (isFinished) {
-      await this.backpacksService.addMaterialsToBackpack(record.uid, operation.rewards as Array<any>);
-    }
-
     return {
       Failed: !isFinished,
       Finished: isFinished,
+      Rewards: operation.rewards as Array<any>,
       Mark: mark,
       Result: result,
     };

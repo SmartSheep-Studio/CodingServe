@@ -263,6 +263,10 @@ export class OperationController {
         Response: null,
       });
     } else {
+      // Release rewards
+      if (response.Finished) {
+        await this.backpacksService.addMaterialsToBackpack(request.user.backpack_id, response.Rewards);
+      }
       res.send({
         Status: {
           Code: response.Finished ? "FINISHED" : "OK",
