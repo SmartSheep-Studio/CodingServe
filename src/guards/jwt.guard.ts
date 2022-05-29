@@ -3,7 +3,12 @@ import { AuthGuard } from "@nestjs/passport";
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard("jwt") {
-  public static ALLOW_LIST = ["/api", "/api/security/users/signin", "/api/security/users/signup"];
+  public static ALLOW_LIST = [
+    "/api",
+    "/api/security/users/signin",
+    "/api/security/users/signup",
+    "/api/security/users/active",
+  ];
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();

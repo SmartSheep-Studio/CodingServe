@@ -2,26 +2,39 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "./prisma.service";
 import { v4 as uuidv4 } from "uuid";
 import { operations as OperationModel, records_operation as RecordOperationModel } from "@prisma/client";
+import { BackpacksService } from "./backpacks.service";
 import axios from "axios";
 
 @Injectable()
-export class OperationService {
-  constructor(private readonly prisma: PrismaService) {}
+export class OperationsService {
+  constructor(private readonly prisma: PrismaService, private readonly backpacksService: BackpacksService) {}
 
-  async createNewOperation(data: object, conditions: object, publisher: string, id?: string) {
+  async createNewOperation(
+    data: object,
+    conditions: object,
+    rewards: Array<object>,
+    costs: Array<object>,
+    publisher: string,
+    id?: string,
+  ) {
     return await this.prisma.operations.create({
       data: {
         id: id ? id : uuidv4(),
         data: data,
         conditions: conditions,
         publisher: publisher,
+        rewards: rewards,
+        costs: costs,
       },
     });
   }
 
-  async getOperationDetail(id: string): Promise<{ operation: OperationModel; records: RecordOperationModel[] }> {
+  async getOperationDetail(
+    uid: string,
+    id: string,
+  ): Promise<{ operation: OperationModel; records: RecordOperationModel[] }> {
     const operation = await this.prisma.operations.findFirst({ where: { id: id, status: "published" } });
-    const records = await this.prisma.records_operation.findMany({ where: { operation: id } });
+    const records = await this.prisma.records_operation.findMany({ where: { uid: uid, operation: id } });
     return { operation, records };
   }
 
@@ -36,14 +49,39 @@ export class OperationService {
       return null;
     } else if (progress < operation.conditions["progress"]) {
       return null;
+    } else if (
+      !(await this.backpacksService.checkMaterialsToBackpack(user.backpack_id, operation.costs as Array<any>))
+    ) {
+      return operation.costs as Array<any>;
     } else {
-      return await this.prisma.records_operation.create({
-        data: { uid: user.id, operation: operation.id, data: [], status: "working" },
-      });
+      await this.backpacksService.deleteMaterialsToBackpack(user.backpack_id, operation.costs as Array<any>);
+      const [record] = await this.prisma.$transaction([
+        this.prisma.records_operation.create({
+          data: { uid: user.id, operation: operation.id, data: [], status: "working" },
+        }),
+        this.prisma.records_activites.create({
+          data: {
+            uid: user.id,
+            type: "operation",
+            data: { operation: operation.id },
+          },
+        }),
+      ]);
+      return record;
+    }
+  }
+
+  async cancelOperation(uid: string, id: number) {
+    const record = await this.prisma.records_operation.findFirst({ where: { uid: uid, id: id, status: "working" } });
+    if (record == null) {
+      return record;
+    } else {
+      return await this.prisma.records_operation.update({ where: { id: id }, data: { status: "canceled" } });
     }
   }
 
   async commitOperation(recordId: number, code: string, runtime: string, runtimeVersion: string, memory = -1) {
+    // Get record and operation instance
     const record = await this.prisma.records_operation.findFirst({ where: { id: recordId, status: "working" } });
     if (record == null) {
       return { Message: "RECORD_NOT_FOUND" };
@@ -52,20 +90,24 @@ export class OperationService {
     }
     const operation = await this.prisma.operations.findUnique({ where: { id: record.operation } });
 
+    // Delete Energy in the backpack
+    await this.backpacksService.deleteMaterialToBackpack(record.uid, { id: "energy", amount: 1 });
+
+    // Flags
     let isFinished = false;
     const isDuplicated =
-      (await this.prisma.records_operation.count({ where: { uid: record.uid, status: "finished" } })) === 0
-        ? false
-        : true;
+      (await this.prisma.records_operation.count({ where: { uid: record.uid, status: "finished" } })) !== 0;
     const mark = [];
     const result = [];
+
+    // Foreach Judgement
     for (const judge of operation.data["judgement"]) {
       const response = await axios
         .create({ validateStatus: () => true })
         .post(process.env.RUNTIME_URL + "/api/v2/execute", {
           language: runtime,
           version: runtimeVersion,
-          files: [{ name: "main", content: code }],
+          files: [{ content: code }],
           stdin: judge["stdin"] ? judge["stdin"] : "",
           args: judge["args"] ? judge["args"] : [],
           compile_timeout: 10000,
@@ -74,8 +116,10 @@ export class OperationService {
           run_memory_limit: memory,
         });
       if (response.status === 200) {
+        // Judgement the answer
         const stdout = response.data.run["stdout"];
         isFinished = (stdout.endsWith("\n") ? stdout.slice(0, stdout.length - 1) : stdout) === judge["stdout"];
+        // Update flags
         mark.push(isFinished);
         result.push(response.data);
         if (!isFinished) {
@@ -85,6 +129,8 @@ export class OperationService {
         return { Message: "RUNTIME_NOT_AVAILABLE" };
       }
     }
+
+    // Update to database
     await this.prisma.records_operation.update({
       where: { id: recordId },
       data: {
@@ -97,6 +143,12 @@ export class OperationService {
         in_progress: !isDuplicated,
       },
     });
+
+    // Release rewards
+    if (isFinished) {
+      await this.backpacksService.addMaterialsToBackpack(record.uid, operation.rewards as Array<any>);
+    }
+
     return {
       Failed: !isFinished,
       Finished: isFinished,
