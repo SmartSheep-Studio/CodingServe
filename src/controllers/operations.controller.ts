@@ -57,8 +57,8 @@ export class OperationController {
     };
   }
 
-  @Get("/records")
-  async listAllOperationRecords(
+  @Get("/logs")
+  async listAllOperationLogs(
     @Request() request: any,
     @Query("take") take = 10000,
     @Query("skip") skip = 0,
@@ -73,7 +73,7 @@ export class OperationController {
     return {
       Status: {
         Code: "OK",
-        Message: "Successfully fetch all your operation records",
+        Message: "Successfully fetch all your operation logs",
       },
       Response: response,
     };
@@ -178,7 +178,7 @@ export class OperationController {
       },
       Response: {
         Operation: operation,
-        Records: logs,
+        Logs: logs,
       },
     };
   }
