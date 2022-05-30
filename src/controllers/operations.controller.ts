@@ -3,6 +3,7 @@ import { Permissions } from "../decorators/permissions.decorator";
 import { OperationsService } from "../services/operations.service";
 import { PrismaService } from "../services/prisma.service";
 import { BackpacksService } from "../services/backpacks.service";
+import { UsersService } from "../services/users.service";
 
 @Controller("/operations")
 export class OperationController {
@@ -10,6 +11,7 @@ export class OperationController {
     private readonly prisma: PrismaService,
     private readonly operationsService: OperationsService,
     private readonly backpacksService: BackpacksService,
+    private readonly usersService: UsersService,
   ) {}
 
   @Get()
@@ -18,6 +20,7 @@ export class OperationController {
     @Query("take") take = 10000,
     @Query("skip") skip = 0,
     @Query("ignore") ignore?: string,
+    @Query("unfinished") unfinished?: string,
   ) {
     const response = await this.prisma.operations.findMany({
       orderBy: { created_at: "desc" },
@@ -28,6 +31,7 @@ export class OperationController {
         ignore === "yes" ? {} : { conditions: { path: "$.level", lte: request.user.level } },
       ),
     });
+    const filtered = [];
     for (const item of response) {
       for (const judge of item.data["judgement"]) {
         if (judge.hidden) {
@@ -36,24 +40,31 @@ export class OperationController {
           });
         }
       }
+      if (unfinished === "yes") {
+        if ((await this.prisma.operation_logs.count({ where: { operation: item.id, in_progress: true } })) === 0) {
+          filtered.push(item);
+        }
+      } else {
+        filtered.push(item);
+      }
     }
     return {
       Status: {
         Code: "OK",
         Message: "Successfully fetch current all available operations",
       },
-      Response: response,
+      Response: filtered,
     };
   }
 
   @Get("/records")
   async listAllOperationRecords(
     @Request() request: any,
-    @Query("take") take = 10,
+    @Query("take") take = 10000,
     @Query("skip") skip = 0,
     @Query("ignore") ignore?: string,
   ) {
-    const response = await this.prisma.records_operation.findMany({
+    const response = await this.prisma.operation_logs.findMany({
       orderBy: { created_at: "desc" },
       skip: skip,
       take: take,
@@ -68,15 +79,56 @@ export class OperationController {
     };
   }
 
+  @Get("/progress")
+  async listAllFinishedOperation(
+    @Request() request: any,
+    @Query("take") take = 10,
+    @Query("skip") skip = 0,
+    @Query("simple") simple?: string,
+  ) {
+    const response = await this.prisma.operation_logs.findMany({
+      orderBy: { created_at: "desc" },
+      skip: skip,
+      take: take,
+      where: { uid: request.user.id, in_progress: true },
+    });
+    if (simple === "yes") {
+      const simpleResponse = [];
+      for (const item of response) {
+        simpleResponse.push(item.operation);
+        return {
+          Status: {
+            Code: "OK",
+            Message: "Successfully fetch your operation progress",
+          },
+          Response: simpleResponse,
+        };
+      }
+    } else {
+      return {
+        Status: {
+          Code: "OK",
+          Message: "Successfully fetch your operation progress",
+        },
+        Response: response,
+      };
+    }
+  }
+
   @Post()
   @HttpCode(200)
   @Permissions("create:operations")
   async createNewOperation(
     @Request() request: any,
     @Res() res: any,
+    @Body("title") title: string,
+    @Body("description") description: string,
+    @Body("story") story: string,
+    @Body("category") category: string,
     @Body("data") data: object,
     @Body("costs") costs: Array<object>,
     @Body("rewards") rewards: Array<object>,
+    @Body("judgement") judgement: Array<object>,
     @Body("conditions") conditions: object,
     @Body("publisher") publisher?: string,
     @Body("id") id?: string,
@@ -86,9 +138,14 @@ export class OperationController {
       response = await this.operationsService.createNewOperation(
         data,
         conditions,
+        judgement,
         rewards,
         costs,
         publisher ? publisher : request.user.id,
+        category,
+        story,
+        title,
+        description,
         id,
       );
     } catch (err) {
@@ -113,7 +170,7 @@ export class OperationController {
 
   @Get("/detail")
   async getOperationDetail(@Request() request: any, @Query("id") id: string) {
-    const { operation, records } = await this.operationsService.getOperationDetail(request.user.id, id);
+    const { operation, logs } = await this.operationsService.getOperationDetail(request.user.id, id);
     return {
       Status: {
         Code: "OK",
@@ -121,7 +178,7 @@ export class OperationController {
       },
       Response: {
         Operation: operation,
-        Records: records,
+        Records: logs,
       },
     };
   }
@@ -129,8 +186,7 @@ export class OperationController {
   @Post("/start")
   @HttpCode(200)
   async startOperation(@Request() request: any, @Res() res: any, @Body("id") id: string) {
-    const slots =
-      3 - (await this.prisma.records_operation.count({ where: { uid: request.user.id, status: "working" } }));
+    const slots = 3 - (await this.prisma.operation_logs.count({ where: { uid: request.user.id, status: "working" } }));
     if (slots - 1 <= 0) {
       return res.status(402).send({
         Status: {
@@ -141,7 +197,7 @@ export class OperationController {
       });
     }
     const isDuplicated =
-      (await this.prisma.records_operation.count({
+      (await this.prisma.operation_logs.count({
         where: {
           uid: request.user.id,
           status: "working",
@@ -238,8 +294,6 @@ export class OperationController {
         },
         Response: null,
       });
-    } else {
-      await this.backpacksService.deleteMaterialToBackpack(request.user.backpack_id, { id: "energy", amount: 1 });
     }
     const response = await this.operationsService.commitOperation(id, code, runtime, runtimeVersion);
     if (response.Message === "RUNTIME_NOT_AVAILABLE") {
@@ -263,7 +317,11 @@ export class OperationController {
       });
     } else {
       // Release rewards
-      if (response.Finished) {
+      if (response.Finished && response.InProgress) {
+        await this.usersService.addUserExperience(
+          await this.prisma.users.findUnique({ where: { id: request.user.id } }),
+          BigInt(process.env.OPERATION_COMPLETED_EXPERIENCE_REWARD),
+        );
         await this.backpacksService.addMaterialsToBackpack(request.user.backpack_id, response.Rewards);
       }
       res.send({
