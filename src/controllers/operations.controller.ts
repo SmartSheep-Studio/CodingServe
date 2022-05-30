@@ -33,9 +33,9 @@ export class OperationController {
     });
     const filtered = [];
     for (const item of response) {
-      for (const judge of item.data["judgement"]) {
+      for (const judge of item.judgement as Array<any>) {
         if (judge.hidden) {
-          item.data["judgement"] = item.data["judgement"].filter((value: any) => {
+          item.judgement = (item.judgement as Array<any>).filter((value: any) => {
             return value !== judge;
           });
         }
