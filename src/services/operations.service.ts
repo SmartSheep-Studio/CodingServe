@@ -163,6 +163,11 @@ export class OperationsService {
           uid: user.id,
           operation_log: log.id,
           code: code,
+          data: {
+            finished: isFinished,
+            marks: mark,
+            result: result,
+          },
         },
       }),
     ]);
