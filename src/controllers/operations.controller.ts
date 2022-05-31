@@ -79,6 +79,20 @@ export class OperationController {
     };
   }
 
+  @Get("/log")
+  async getDetailOperationLogs(@Request() request: any, @Query("id") id: string) {
+    const response = await this.prisma.operation_logs.findFirst({
+      where: { uid: request.user.id, id: Number.parseInt(id) },
+    });
+    return {
+      Status: {
+        Code: "OK",
+        Message: "Successfully fetch your operation log " + id,
+      },
+      Response: response,
+    };
+  }
+
   @Get("/progress")
   async listAllFinishedOperation(
     @Request() request: any,
@@ -113,6 +127,18 @@ export class OperationController {
         Response: response,
       };
     }
+  }
+
+  @Get("/detail")
+  async getOperationDetail(@Request() request: any, @Query("id") id: string) {
+    const { operation } = await this.operationsService.getOperationDetail(request.user.id, id);
+    return {
+      Status: {
+        Code: "OK",
+        Message: "Successfully fetch operation detail",
+      },
+      Response: operation,
+    };
   }
 
   @Post()
@@ -166,21 +192,6 @@ export class OperationController {
       },
       Response: response,
     });
-  }
-
-  @Get("/detail")
-  async getOperationDetail(@Request() request: any, @Query("id") id: string) {
-    const { operation, logs } = await this.operationsService.getOperationDetail(request.user.id, id);
-    return {
-      Status: {
-        Code: "OK",
-        Message: "Successfully fetch operation detail",
-      },
-      Response: {
-        Operation: operation,
-        Logs: logs,
-      },
-    };
   }
 
   @Post("/start")
