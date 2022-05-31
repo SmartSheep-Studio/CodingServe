@@ -18,7 +18,7 @@ export class LocksController {
     @Body("description") description: string,
     @Body("expired_at") expired: string,
   ) {
-    await this.locksService.lockUser(request.user.id, uid, description, false, new Date(expired));
+    await this.locksService.lockUser(request.user.id, uid, description, true, new Date(expired));
     return {
       Status: {
         Code: "OK",
