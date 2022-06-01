@@ -4,6 +4,7 @@ import { OperationsService } from "../services/operations.service";
 import { PrismaService } from "../services/prisma.service";
 import { BackpacksService } from "../services/backpacks.service";
 import { UsersService } from "../services/users.service";
+import { operations } from ".prisma/client";
 
 @Controller("/operations")
 export class OperationController {
@@ -93,6 +94,20 @@ export class OperationController {
     };
   }
 
+  @Get("/commits")
+  async listOperationLogCommits(@Request() request: any, @Query("id") id: string) {
+    const response = await this.prisma.operation_commits.findMany({
+      where: { uid: request.user.id, operation_log: Number.parseInt(id) },
+    });
+    return {
+      Status: {
+        Code: "OK",
+        Message: "Successfully fetch log commits",
+      },
+      Response: response,
+    };
+  }
+
   @Get("/progress")
   async listAllFinishedOperation(
     @Request() request: any,
@@ -132,6 +147,13 @@ export class OperationController {
   @Get("/detail")
   async getOperationDetail(@Request() request: any, @Query("id") id: string) {
     const { operation } = await this.operationsService.getOperationDetail(request.user.id, id);
+    for (const judge of operation.judgement as Array<any>) {
+      if (judge.hidden) {
+        operation.judgement = (operation.judgement as Array<any>).filter((value: any) => {
+          return value !== judge;
+        });
+      }
+    }
     return {
       Status: {
         Code: "OK",
@@ -159,7 +181,7 @@ export class OperationController {
     @Body("publisher") publisher?: string,
     @Body("id") id?: string,
   ) {
-    let response;
+    let response: operations;
     try {
       response = await this.operationsService.createNewOperation(
         data,
@@ -281,7 +303,7 @@ export class OperationController {
   async commitOperation(
     @Request() request: any,
     @Res() res: any,
-    @Body("id") id: number,
+    @Body("id") id: string,
     @Body("code") code: string,
     @Query("runtime") runtime: string,
     @Query("runtimeVersion") runtimeVersion: string,
@@ -306,7 +328,7 @@ export class OperationController {
         Response: null,
       });
     }
-    const response = await this.operationsService.commitOperation(id, code, runtime, runtimeVersion);
+    const response = await this.operationsService.commitOperation(Number.parseInt(id), code, runtime, runtimeVersion);
     if (response.Message === "RUNTIME_NOT_AVAILABLE") {
       res.status(400).send({
         Status: {
@@ -328,17 +350,17 @@ export class OperationController {
       });
     } else {
       // Release rewards
-      if (response.Finished && response.InProgress) {
+      if (response.finished && response.progress) {
         await this.usersService.addUserExperience(
           await this.prisma.users.findUnique({ where: { id: request.user.id } }),
           BigInt(process.env.OPERATION_COMPLETED_EXPERIENCE_REWARD),
         );
-        await this.backpacksService.addMaterialsToBackpack(request.user.backpack_id, response.Rewards);
+        await this.backpacksService.addMaterialsToBackpack(request.user.backpack_id, response.rewards);
       }
       res.send({
         Status: {
-          Code: response.Finished ? "FINISHED" : "OK",
-          Message: response.Finished
+          Code: response.finished ? "FINISHED" : "OK",
+          Message: response.finished
             ? "Current operation is finish, operation automatic closed."
             : "Successfully commit operation.",
         },

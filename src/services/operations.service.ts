@@ -1,14 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "./prisma.service";
 import { v4 as uuidv4 } from "uuid";
-import {
-  operations as OperationModel,
-  operation_logs as OperationLogModel,
-  operation_commits as OperationCommitModel,
-} from "@prisma/client";
+import { operations as OperationModel, operation_logs as OperationLogModel } from "@prisma/client";
 import { BackpacksService } from "./backpacks.service";
 import axios from "axios";
-import exp from "constants";
 
 @Injectable()
 export class OperationsService {
@@ -165,20 +160,19 @@ export class OperationsService {
           code: code,
           data: {
             finished: isFinished,
+            progress: !isDuplicated,
+            rewards: operation.rewards as Array<any>,
             marks: mark,
-            result: result,
           },
         },
       }),
     ]);
 
     return {
-      Failed: !isFinished,
-      Finished: isFinished,
-      InProgress: !isDuplicated,
-      Rewards: operation.rewards as Array<any>,
-      Mark: mark,
-      Result: result,
+      finished: isFinished,
+      progress: !isDuplicated,
+      rewards: operation.rewards as Array<any>,
+      marks: mark,
     };
   }
 }
