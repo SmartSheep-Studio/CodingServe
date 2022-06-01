@@ -42,7 +42,11 @@ export class OperationController {
         }
       }
       if (unfinished === "yes") {
-        if ((await this.prisma.operation_logs.count({ where: { operation: item.id, in_progress: true } })) === 0) {
+        if (
+          (await this.prisma.operation_logs.count({
+            where: { uid: request.user.id, operation: item.id, in_progress: true },
+          })) === 0
+        ) {
           filtered.push(item);
         }
       } else {
