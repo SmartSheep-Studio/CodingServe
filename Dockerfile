@@ -1,31 +1,26 @@
-FROM node:16-alpine as builder
+FROM node:16 as builder
 
-ENV NODE_ENV build
+# Create app directory
+WORKDIR /app
 
-USER node
-WORKDIR /home/node
-
+# A wildcard is used to ensure both package.json AND package-lock.json are copied
 COPY package*.json ./
-# RUN npm ci
+COPY node_modules ./node_modules/
+COPY prisma ./prisma/
 
-COPY --chown=node:node . .
-RUN yarn install \
-    && yarn run build
+# Install app dependencies
+# RUN npm install
 
-FROM node:16-alpine
+COPY . .
 
-ENV NODE_ENV production
+RUN npm run build
 
-USER node
-WORKDIR /home/node
+FROM node:16
 
-COPY --from=builder --chown=node:node /home/node/package*.json ./
-COPY --from=builder --chown=node:node /home/node/node_modules/ ./node_modules/
-COPY --from=builder --chown=node:node /home/node/dist/ ./dist/
-COPY --from=builder --chown=node:node /home/node/ui/ ./dist/ui/
-COPY --from=builder --chown=node:node /home/node/templates/ ./dist/templates/
-COPY --from=builder --chown=node:node /home/node/prisma/ ./prisma/
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/templates/ ./dist/templates/
 
-EXPOSE 3100
-
-CMD ["node", "dist/src/main.js"]
+EXPOSE 3000
+CMD [ "npm", "run", "start:prod" ]

@@ -23,6 +23,7 @@ export class OperationController {
     @Query("ignore") ignore?: string,
     @Query("unfinished") unfinished?: string,
   ) {
+    const user = await this.prisma.users.findUnique({ where: { id: request.user.id } });
     const response = await this.prisma.operations.findMany({
       orderBy: { created_at: "desc" },
       skip: skip,
@@ -32,6 +33,9 @@ export class OperationController {
         ignore === "yes" ? {} : { conditions: { path: "$.level", lte: request.user.level } },
       ),
     });
+    // Get progress
+    const progress = await this.operationsService.getUserProgress(request.user.id);
+    // Filter
     const filtered = [];
     for (const item of response) {
       for (const judge of item.judgement as Array<any>) {
@@ -47,10 +51,20 @@ export class OperationController {
             where: { uid: request.user.id, operation: item.id, in_progress: true },
           })) === 0
         ) {
-          filtered.push(item);
+          filtered.push(
+            Object.assign(item, {
+              finished: progress.includes(item.id),
+              unlocked: this.operationsService.canStartOperation(user, item, progress.length),
+            }),
+          );
         }
       } else {
-        filtered.push(item);
+        filtered.push(
+          Object.assign(item, {
+            finished: progress.includes(item.id),
+            unlocked: this.operationsService.canStartOperation(user, item, progress.length),
+          }),
+        );
       }
     }
     return {
@@ -113,31 +127,21 @@ export class OperationController {
   }
 
   @Get("/progress")
-  async listAllFinishedOperation(
-    @Request() request: any,
-    @Query("take") take = 10,
-    @Query("skip") skip = 0,
-    @Query("simple") simple?: string,
-  ) {
-    const response = await this.prisma.operation_logs.findMany({
-      orderBy: { created_at: "desc" },
-      skip: skip,
-      take: take,
-      where: { uid: request.user.id, in_progress: true },
-    });
+  async listAllFinishedOperation(@Request() request: any, @Query("simple") simple?: string) {
     if (simple === "yes") {
-      const simpleResponse = [];
-      for (const item of response) {
-        simpleResponse.push(item.operation);
-        return {
-          Status: {
-            Code: "OK",
-            Message: "Successfully fetch your operation progress",
-          },
-          Response: simpleResponse,
-        };
-      }
+      const response = await this.operationsService.getUserProgress(request.user.id);
+      return {
+        Status: {
+          Code: "OK",
+          Message: "Successfully fetch your operation progress",
+        },
+        Response: response,
+      };
     } else {
+      const response = await this.prisma.operation_logs.findMany({
+        orderBy: { created_at: "desc" },
+        where: { uid: request.user.id, in_progress: true },
+      });
       return {
         Status: {
           Code: "OK",

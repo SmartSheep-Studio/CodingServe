@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "./prisma.service";
 import { v4 as uuidv4 } from "uuid";
-import { operations as OperationModel, operation_logs as OperationLogModel } from "@prisma/client";
+import { operations as OperationModel, operation_logs as OperationLogModel, users as UserModel } from "@prisma/client";
 import { BackpacksService } from "./backpacks.service";
 import axios from "axios";
 
@@ -41,10 +41,33 @@ export class OperationsService {
     });
   }
 
+  async getUserProgress(uid: string) {
+    const progress = [];
+    for (const item of await this.prisma.operation_logs.findMany({
+      orderBy: { created_at: "desc" },
+      where: { uid: uid, in_progress: true },
+    })) {
+      progress.push(item.operation);
+    }
+    return progress;
+  }
+
   async getOperationDetail(uid: string, id: string): Promise<{ operation: OperationModel; logs: OperationLogModel[] }> {
     const operation = await this.prisma.operations.findFirst({ where: { id: id, status: "published" } });
     const logs = await this.prisma.operation_logs.findMany({ where: { uid: uid, operation: id } });
     return { operation, logs };
+  }
+
+  canStartOperation(user: UserModel, operation: OperationModel, progress: number) {
+    if (operation.status !== "published") {
+      return false;
+    } else if (user.level < operation.conditions["level"]) {
+      return false;
+    } else if (progress < operation.conditions["progress"]) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
   async startOperation(uid: string, id: string) {
@@ -54,11 +77,7 @@ export class OperationsService {
       where: { uid: user.id, status: "finished", in_progress: true },
     });
 
-    if (operation.status !== "published") {
-      return null;
-    } else if (user.level < operation.conditions["level"]) {
-      return null;
-    } else if (progress < operation.conditions["progress"]) {
+    if (!this.canStartOperation(user, operation, progress)) {
       return null;
     } else if (
       !(await this.backpacksService.checkMaterialsToBackpack(user.backpack_id, operation.costs as Array<any>))
