@@ -1,26 +1,27 @@
-# CodingLand
+# CodingServe
 
-**Notice: This README.md and the official documentation isn't updated yet!**
+Backend of CodingLand
 
-LumbaShark is a very sharp Authorization management system, compatible with OAuth2 Authorization Code mode
+**Currently in the alpha development stage(inner test), a lot of features are not implemented, very unstable, not recommend to deploy to product environment and public test!**
 
-## Getting Start
+**We are looking for the translator!**
+
+**Recommend use `pnpm` to manage package, use disk space efficient!**
+
+## Start up
+
+### Product
 
 1. Pulling our docker image
 
 ```bash
-docker pull xsheep2010/lumbashark:1.2.0
+docker pull xsheep2010/codingland:latest
 ```
 
 2. Run the docker image
 
 ```bash
-# With out daemon
-docker run --name lumbashark -p 3100:3100 -e DATABASE_URL="mysql://root:root@192.168.50.215:3306/lumbashark?schema=public" lumbashark:latest
-# With in daemon
 docker run --name lumbashark -p 3100:3100 -e DATABASE_URL="mysql://root:root@192.168.50.215:3306/lumbashark?schema=public" -d lumbashark:latest
-# Start when server start
-docker run --name lumbashark -p 3100:3100 -e DATABASE_URL="mysql://root:root@192.168.50.215:3306/lumbashark?schema=public" --restart=always -d lumbashark:latest
 ```
 
 3. Init scheme for the database(Upgrade with out this step)
@@ -32,36 +33,41 @@ yarn prisma db push
 
 4. All are done!
 
-## Building
+### Development
 
-1. Install [Docker Engine](https://docs.docker.com/engine/install/) or [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-2. Download our [SharkUI](https://gitee.com/smartsheep-studio/SharkUI) and build it with `npm i && npm run build:docker` or `yarn && yarn build`
-3. Copy the build dist to the project root and rename it to `ui`
-4. Run command `npm run build:docker` or `yarn build:docker`
+```bash
+pnpm i
+# ...editing .env file
+pnpm prisma db push
+pnpm start:dev
+```
 
-## Authenticate
+### Build
 
-### Groups
+```bash
+# ...install docker engine
+# ...building codingui
+pnpm i
+pnpm build:docker # for docker
+pnpm prisma generate && pnpm build # or for upload
+```
 
-Now we available user group is:
+## Project Structure
 
-1. Common User
-2. Developer
-3. Super Admin **(Optional)**
+- `.vscode` settings for vscode
+- `prisma` prisma configure file
+- `public` serving root
+- `src/controllers` controllers
+- `src/decorators` permission guards helper
+- `src/guards` controlellr guards
+- `src/enums` script type documents
+- `src/interceptors` before request handle in controller
+- `src/modules` nestjs configure files
+- `src/services` logic function
+- `src/utils` useful function
+- `templates` built-in templates
+- `test` test of code
 
-Common User is default registered user will joined(Didn't join any group `group_id=0`). Common Users can grant access for other developers create applications.
+## Technology Stack
 
-Developer is didn't join any group user can register. Developers can register new OAuth client for them project use.
-
-Super Admin usually have all the permissions, they can manage all things of the LumbaShark authorization system.
-
-### OAuth Scopes
-
-Now we have scopes are these:
-
-1. `all` Can access all things for you
-2. `read:profile` Can read your profile(Includes email, user set profile(address, gender), create date...) by **Profile Controller**
-3. `write:developer` Can create client for developer
-4. `read:developer` Can read developers created clients
-
-Tips: If grant access account didn't have permission to access area, the OAuth client can't access yet.
+NestJS(MVC restful framework) + ExpressJS(Web core) + Prisma(Database orm) + Pug(For built-in template) + MySQL(Storage data) + Docker(Easy build and deploy) + TypeScript(Better than javascript)

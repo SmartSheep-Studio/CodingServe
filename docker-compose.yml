@@ -1,20 +1,30 @@
-version: '3'
+version: "3"
 services:
-  lumbashark:
-    container_name: 'lumbashark_app'
-    image: smartsheep-docker.pkg.coding.net/lumba/lumbashark/lumbashark:0.1.1
+  codingland:
+    image: codingland
+    # image: xsheep2010/codingland
     ports:
-      - '3100:3100'
-    links:
-      - 'mysql:database'
+      - "3100:3100"
     depends_on:
       - mysql
-    environment:
-      DATABASE_URL: 'mysql://root:password@172.22.0.2:3306/lumbashark?schema=public'
+      - piston
+    env_file:
+      - .env
   mysql:
-    container_name: 'lumbashark_mysql'
+    container_name: "lumbashark_mysql"
     restart: always
     image: mysql:latest
     environment:
-      MYSQL_DATABASE: 'lumbashark'
-      MYSQL_ROOT_PASSWORD: 'password'
+      MYSQL_DATABASE: "codingland"
+      MYSQL_ROOT_PASSWORD: "password"
+    volumes:
+      - db:/var/lib/mysql
+  piston:
+    image: ghcr.io/engineer-man/piston
+    container_name: code_runner
+    restart: always
+    volumes:
+      - piston:/piston
+volumes:
+  db: {}
+  piston: {}
