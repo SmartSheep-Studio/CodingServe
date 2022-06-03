@@ -1,13 +1,40 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "./prisma.service";
 import { v4 as uuidv4 } from "uuid";
-import { operations as OperationModel, operation_logs as OperationLogModel, users as UserModel } from "@prisma/client";
+import {
+  operations as OperationModel,
+  operation_logs as OperationLogModel,
+  operation_chapter as OperationChapterModel,
+  users as UserModel,
+} from "@prisma/client";
 import { BackpacksService } from "./backpacks.service";
 import axios from "axios";
 
 @Injectable()
 export class OperationsService {
   constructor(private readonly prisma: PrismaService, private readonly backpacksService: BackpacksService) {}
+
+  async createNewChapter(
+    title: string,
+    description: string,
+    story: string,
+    category: string,
+    publisher: string,
+    data: object,
+    id?: string,
+  ) {
+    return await this.prisma.operation_chapter.create({
+      data: {
+        id: id ? id : uuidv4(),
+        title: title,
+        description: description,
+        story: story,
+        category: category,
+        publisher: publisher,
+        data: data,
+      },
+    });
+  }
 
   async createNewOperation(
     data: object,
@@ -19,26 +46,34 @@ export class OperationsService {
     category: string,
     story: string,
     title: string,
+    chapter: string,
+    ignore?: boolean,
     description?: string,
     id?: string,
     expired_at?: Date,
   ) {
-    return await this.prisma.operations.create({
-      data: {
-        id: id ? id : uuidv4(),
-        data: data,
-        conditions: conditions,
-        judgement: judgement,
-        publisher: publisher,
-        rewards: rewards,
-        costs: costs,
-        category: category,
-        title: title,
-        description: description ? description : "",
-        story: story,
-        expired_at: expired_at,
-      },
-    });
+    if ((await this.prisma.operation_chapter.count({ where: { id: chapter } })) === 0) {
+      throw new Error("Chapter not found");
+    } else {
+      return await this.prisma.operations.create({
+        data: {
+          id: id ? id : uuidv4(),
+          data: data,
+          conditions: conditions,
+          judgement: judgement,
+          publisher: publisher,
+          rewards: rewards,
+          costs: costs,
+          category: category,
+          title: title,
+          description: description ? description : "",
+          story: story,
+          chapter: chapter,
+          ignore: ignore,
+          expired_at: expired_at,
+        },
+      });
+    }
   }
 
   async getUserProgress(uid: string) {
@@ -58,12 +93,32 @@ export class OperationsService {
     return { operation, logs };
   }
 
+  canStartChapter(user: UserModel, chapter: OperationChapterModel, progress: number): boolean {
+    if (chapter == null) {
+      return false;
+    } else if (chapter.status !== "published") {
+      return false;
+    } else if (user.level < chapter.data["level"]) {
+      return false;
+    } else if (progress < chapter.data["progress"]) {
+      return false;
+    } else if (chapter.expired_at != null && new Date(chapter.expired_at) > new Date()) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
   canStartOperation(user: UserModel, operation: OperationModel, progress: number) {
-    if (operation.status !== "published") {
+    if (operation == null) {
+      return false;
+    } else if (operation.status !== "published") {
       return false;
     } else if (user.level < operation.conditions["level"]) {
       return false;
     } else if (progress < operation.conditions["progress"]) {
+      return false;
+    } else if (operation.expired_at != null && new Date(operation.expired_at) > new Date()) {
       return false;
     } else {
       return true;
@@ -73,11 +128,12 @@ export class OperationsService {
   async startOperation(uid: string, id: string) {
     const user = await this.prisma.users.findUnique({ where: { id: uid } });
     const operation = await this.prisma.operations.findUnique({ where: { id: id } });
+    const chapter = await this.prisma.operation_chapter.findUnique({ where: { id: operation.chapter } });
     const progress = await this.prisma.operation_logs.count({
       where: { uid: user.id, status: "finished", in_progress: true },
     });
 
-    if (!this.canStartOperation(user, operation, progress)) {
+    if (!this.canStartChapter(user, chapter, progress) || !this.canStartOperation(user, operation, progress)) {
       return null;
     } else if (
       !(await this.backpacksService.checkMaterialsToBackpack(user.backpack_id, operation.costs as Array<any>))
@@ -179,7 +235,7 @@ export class OperationsService {
           code: code,
           data: {
             finished: isFinished,
-            progress: !isDuplicated,
+            progress: !isDuplicated && !operation.ignore,
             rewards: operation.rewards as Array<any>,
             marks: mark,
           },

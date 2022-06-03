@@ -145,8 +145,25 @@ model operation_commits {
   updated_at    DateTime @updatedAt
 }
 
+model operation_chapter {
+  id          String    @id @db.VarChar(36)
+  publisher   String    @db.VarChar(36)
+  // Informations
+  title       String
+  status      String    @default("editing") @db.VarChar(12)
+  category    String
+  story       String    @db.Text()
+  description String    @db.Text()
+  data        Json
+  // DateTimes
+  expired_at  DateTime?
+  created_at  DateTime  @default(now()) @db.DateTime(0)
+  updated_at  DateTime  @updatedAt
+}
+
 model operations {
   id          String    @id @db.VarChar(36)
+  chapter     String    @db.VarChar(36)
   publisher   String    @db.VarChar(36)
   // Informations
   // Available status "editing", "published", "deleted"
@@ -160,6 +177,7 @@ model operations {
   conditions  Json
   rewards     Json
   costs       Json
+  ignore      Boolean   @default(true)
   // DateTimes
   expired_at  DateTime?
   created_at  DateTime  @default(now()) @db.DateTime(0)

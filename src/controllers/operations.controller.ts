@@ -18,11 +18,13 @@ export class OperationController {
   @Get()
   async listAllOperations(
     @Request() request: any,
+    @Query("chapter") chapterId: string,
     @Query("take") take = 10000,
     @Query("skip") skip = 0,
     @Query("ignore") ignore?: string,
     @Query("unfinished") unfinished?: string,
   ) {
+    let chapter: any;
     const user = await this.prisma.users.findUnique({ where: { id: request.user.id } });
     const response = await this.prisma.operations.findMany({
       orderBy: { created_at: "desc" },
@@ -31,8 +33,13 @@ export class OperationController {
       where: Object.assign(
         { status: "published" },
         ignore === "yes" ? {} : { conditions: { path: "$.level", lte: request.user.level } },
+        chapterId != null ? {} : { chapter: chapterId },
       ),
     });
+    // Get chapter
+    if (chapterId != null) {
+      chapter = await this.prisma.operation_chapter.findUnique({ where: { id: chapterId } });
+    }
     // Get progress
     const progress = await this.operationsService.getUserProgress(request.user.id);
     // Filter
@@ -54,7 +61,9 @@ export class OperationController {
           filtered.push(
             Object.assign(item, {
               finished: progress.includes(item.id),
-              unlocked: this.operationsService.canStartOperation(user, item, progress.length),
+              unlocked:
+                this.operationsService.canStartChapter(user, chapter, progress.length) &&
+                this.operationsService.canStartOperation(user, item, progress.length),
             }),
           );
         }
@@ -62,10 +71,50 @@ export class OperationController {
         filtered.push(
           Object.assign(item, {
             finished: progress.includes(item.id),
-            unlocked: this.operationsService.canStartOperation(user, item, progress.length),
+            unlocked:
+              this.operationsService.canStartChapter(user, chapter, progress.length) &&
+              this.operationsService.canStartOperation(user, item, progress.length),
           }),
         );
       }
+    }
+    return {
+      Status: {
+        Code: "OK",
+        Message: "Successfully fetch current all available operations",
+      },
+      Response: filtered,
+    };
+  }
+
+  @Get("/chapter")
+  async listAllChapters(
+    @Request() request: any,
+    @Query("take") take = 10000,
+    @Query("skip") skip = 0,
+    @Query("ignore") ignore?: string,
+  ) {
+    const user = await this.prisma.users.findUnique({ where: { id: request.user.id } });
+    const response = await this.prisma.operation_chapter.findMany({
+      orderBy: { created_at: "desc" },
+      skip: skip,
+      take: take,
+      where: Object.assign(
+        { status: "published" },
+        ignore === "yes" ? {} : { data: { path: "$.level", lte: request.user.level } },
+      ),
+    });
+    // Get progress
+    const progress = await this.operationsService.getUserProgress(request.user.id);
+    // Filter
+    const filtered = [];
+    for (const item of response) {
+      filtered.push(
+        Object.assign(item, {
+          finished: progress.includes(item.id),
+          unlocked: this.operationsService.canStartChapter(user, item, progress.length),
+        }),
+      );
     }
     return {
       Status: {
@@ -171,12 +220,44 @@ export class OperationController {
     };
   }
 
+  @Post("/chapter")
+  @HttpCode(200)
+  @Permissions("create:operation-chapters")
+  async createNewChapter(
+    @Request() request: any,
+    @Body("title") title: string,
+    @Body("story") story: string,
+    @Body("category") category: string,
+    @Body("data") data: object,
+    @Body("description") description?: string,
+    @Body("publisher") publisher?: string,
+    @Body("id") id?: string,
+  ) {
+    const response = await this.operationsService.createNewChapter(
+      title,
+      description ? description : "",
+      story,
+      category,
+      publisher,
+      data,
+      id,
+    );
+    return {
+      Status: {
+        Code: "OK",
+        Message: "Successfully create new operation chapter",
+      },
+      Response: response,
+    };
+  }
+
   @Post()
   @HttpCode(200)
   @Permissions("create:operations")
   async createNewOperation(
     @Request() request: any,
     @Res() res: any,
+    @Body("chapter") chapter: string,
     @Body("title") title: string,
     @Body("description") description: string,
     @Body("story") story: string,
@@ -186,6 +267,7 @@ export class OperationController {
     @Body("rewards") rewards: Array<object>,
     @Body("judgement") judgement: Array<object>,
     @Body("conditions") conditions: object,
+    @Body("ignore") ignore?: boolean,
     @Body("publisher") publisher?: string,
     @Body("id") id?: string,
   ) {
@@ -201,6 +283,8 @@ export class OperationController {
         category,
         story,
         title,
+        chapter,
+        ignore,
         description,
         id,
       );

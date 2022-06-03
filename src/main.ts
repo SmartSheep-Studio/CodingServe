@@ -1,7 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
-import { OnlineEventInterceptor } from "./interceptors/OnlineEvent.interceptor";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const JSONBigInt = require("json-bigint");
@@ -14,6 +14,7 @@ async function bootstrap() {
   JSON.stringify = JSONBigInt.stringify;
 
   const app = await NestFactory.create(AppModule);
+  app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
     .setTitle("CodingLand")
