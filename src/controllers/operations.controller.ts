@@ -18,6 +18,7 @@ export class OperationController {
   @Get()
   async listAllOperations(
     @Request() request: any,
+    @Res() res: any,
     @Query("chapter") chapterId: string,
     @Query("take") take = 10000,
     @Query("skip") skip = 0,
@@ -39,6 +40,15 @@ export class OperationController {
     // Get chapter
     if (chapterId != null) {
       chapter = await this.prisma.operation_chapter.findUnique({ where: { id: chapterId } });
+      if (chapter == null) {
+        return res.status(400).send({
+          Status: {
+            Code: "DATA_ERROR",
+            Message: "Operation chapter not found",
+          },
+          Response: null,
+        });
+      }
     }
     // Get progress
     const progress = await this.operationsService.getUserProgress(request.user.id);
@@ -62,7 +72,7 @@ export class OperationController {
             Object.assign(item, {
               finished: progress.includes(item.id),
               unlocked:
-                this.operationsService.canStartChapter(user, chapter, progress.length) &&
+                (chapter != null ? this.operationsService.canStartChapter(user, chapter, progress.length) : true) &&
                 this.operationsService.canStartOperation(user, item, progress.length),
             }),
           );
@@ -72,19 +82,19 @@ export class OperationController {
           Object.assign(item, {
             finished: progress.includes(item.id),
             unlocked:
-              this.operationsService.canStartChapter(user, chapter, progress.length) &&
+              (chapter != null ? this.operationsService.canStartChapter(user, chapter, progress.length) : true) &&
               this.operationsService.canStartOperation(user, item, progress.length),
           }),
         );
       }
     }
-    return {
+    return res.send({
       Status: {
         Code: "OK",
         Message: "Successfully fetch current all available operations",
       },
       Response: filtered,
-    };
+    });
   }
 
   @Get("/chapter")
