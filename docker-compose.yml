@@ -1,8 +1,8 @@
 version: "3"
 services:
   codingland:
-    image: codingland
-    # image: xsheep2010/codingland
+    image: codingland:2.0.1
+    # image: xsheep2010/codingland:2.0.1
     ports:
       - "3100:3100"
     depends_on:
