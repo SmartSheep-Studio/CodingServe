@@ -27,15 +27,23 @@ export class OperationController {
   ) {
     let chapter: any;
     const user = await this.prisma.users.findUnique({ where: { id: request.user.id } });
+    // Get progress
+    const progress = await this.operationsService.getUserProgress(request.user.id);
+    // Get operations
     const response = await this.prisma.operations.findMany({
       orderBy: { created_at: "desc" },
       skip: skip,
       take: take,
-      where: Object.assign(
-        { status: "published" },
-        ignore === "yes" ? {} : { conditions: { path: "$.level", lte: request.user.level } },
-        chapterId != null ? {} : { chapter: chapterId },
-      ),
+      where: {
+        AND: [
+          Object.assign(
+            { status: "published" },
+            ignore === "yes" ? {} : { conditions: { path: "$.level", lte: request.user.level } },
+            chapterId != null ? {} : { chapter: chapterId },
+          ),
+          { conditions: { path: "$.progress", lte: progress.length } },
+        ],
+      },
     });
     // Get chapter
     if (chapterId != null) {
@@ -50,8 +58,6 @@ export class OperationController {
         });
       }
     }
-    // Get progress
-    const progress = await this.operationsService.getUserProgress(request.user.id);
     // Filter
     const filtered = [];
     for (const item of response) {
