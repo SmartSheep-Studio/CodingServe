@@ -11,7 +11,6 @@ services:
     env_file:
       - .env
   mysql:
-    container_name: "lumbashark_mysql"
     restart: always
     image: mysql:latest
     environment:
