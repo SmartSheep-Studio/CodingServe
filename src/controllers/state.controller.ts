@@ -14,10 +14,11 @@ export class StateController {
         Message: "Successfully fetch server information and modules statues",
       },
       Response: {
-        Message: process.env.SERVER_MAINTENANCE
-          ? process.env.SERVER_MAINTENANCE_DESCRIPTION
-          : "All service and module are working perfectly!",
-        Services: process.env.SERVER_MAINTENANCE ? "DOWN" : "UP",
+        Message:
+          process.env.SERVER_MAINTENANCE === "yes"
+            ? process.env.SERVER_MAINTENANCE_DESCRIPTION
+            : "All service and module are working perfectly!",
+        Services: process.env.SERVER_MAINTENANCE === "yes" ? "DOWN" : "UP",
         NodeName: "Logic Mainland",
         Version: packages.version,
         Details: {
