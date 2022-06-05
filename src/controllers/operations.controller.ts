@@ -41,7 +41,7 @@ export class OperationController {
             ignore === "yes" ? {} : { conditions: { path: "$.level", lte: request.user.level } },
             chapterId != null ? {} : { chapter: chapterId },
           ),
-          { conditions: { path: "$.progress", lte: progress.length } },
+          ignore === "yes" ? {} : { conditions: { path: "$.progress", lte: progress.length } },
         ],
       },
     });
