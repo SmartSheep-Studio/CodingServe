@@ -163,9 +163,9 @@ export class UsersController {
   @Post("/signin")
   @HttpCode(200)
   @UseGuards(LocalAuthGuard)
-  async getAccessToken(@Request() request: any, @RealIP() ip: string) {
+  async getAccessToken(@Request() request: any) {
     const token = this.usersService.signJWT(request.user);
-    await this.recordsService.createNewActivityRecord(request.user.id, "signin", { at: ip });
+    await this.recordsService.createNewActivityRecord(request.user.id, "signin", { at: request.ip });
     return {
       Status: {
         Code: "OK",

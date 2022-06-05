@@ -4,7 +4,6 @@ import { PrismaService } from "./prisma.service";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import { BackpacksService } from "./backpacks.service";
-import MaterialsUtils from "../utils/MaterialsUtils";
 import { RecordsService } from "./records.service";
 
 @Injectable()
@@ -30,8 +29,14 @@ export class UsersService {
     return await this.prisma.users.findUnique({ where: { email: email } });
   }
 
-  async validateUser(username: string, password: string): Promise<UserModel | null> {
-    const user = await this.getUserByUsername(username);
+  async getUserByIdentification(identification: string): Promise<any> {
+    return await this.prisma.users.findFirst({
+      where: { OR: [{ username: { equals: identification } }, { email: { equals: identification } }] },
+    });
+  }
+
+  async validateUser(identification: string, password: string): Promise<UserModel | null> {
+    const user = await this.getUserByIdentification(identification);
     if (user && (await bcrypt.compare(password, user.password))) {
       return user;
     }
