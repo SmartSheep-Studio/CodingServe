@@ -85,6 +85,18 @@ model backpacks {
   updated_at DateTime @updatedAt
 }
 
+model backpack_cells {
+  id          Int      @id @default(autoincrement())
+  backpack_id String   @db.VarChar(36)
+  // Informations
+  item        String   @db.VarChar(36)
+  amount      BigInt   @default(0)
+  attributes  Json
+  // DateTimes
+  created_at  DateTime @default(now()) @db.DateTime(0)
+  updated_at  DateTime @updatedAt
+}
+
 model backpack_map {
   id         String   @id @db.VarChar(36)
   // Informations
